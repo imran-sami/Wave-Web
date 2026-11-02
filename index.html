@@ -160,6 +160,10 @@ body.hasmini .app{padding-bottom:116px}
 .stage.video{aspect-ratio:16/9;width:100%;max-width:680px;margin-top:26px}
 .stage.video #v{display:block}.stage.video .dsc,.stage.video .arm{display:none}
 #viz{display:none;position:absolute;inset:0;width:100%;height:100%}
+.stage{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.dtk{position:absolute;top:0;bottom:0;width:40%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(255,255,255,.22);color:#fff;font-size:28px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:6;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.dtk b{font-size:13px;font-weight:600}.dtk.on{opacity:1}
+.dtk.l{left:0;border-radius:0 60% 60% 0/0 50% 50% 0}.dtk.r{right:0;border-radius:60% 0 0 60%/50% 0 0 50%}
 .stage{cursor:pointer}
 .stage[data-cv] #viz{display:block}
 .stage[data-cv] .dsc,.stage[data-viz] .arm{display:none}
@@ -400,6 +404,7 @@ try{pls=JSON.parse(localStorage.getItem("wave_pl")||"[]")}catch(e){}
 try{Object.assign(set,JSON.parse(localStorage.getItem("wave_set")||"{}"))}catch(e){}
 const savePl=()=>{try{localStorage.setItem("wave_pl",JSON.stringify(pls))}catch(e){}};
 const saveSet=()=>{try{localStorage.setItem("wave_set",JSON.stringify(set))}catch(e){}};
+const BK_MAGIC="WAVEBK01",bkDate=()=>{try{return+localStorage.getItem("wave_bk")||0}catch(e){return 0}},bkAgo=()=>{const t=bkDate();return t?"Last backup: "+new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"No backup yet"};
 const lum=h=>{const n=parseInt(h.slice(1,7),16),f=c=>{c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4)};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)},onc=h=>lum(h)>.4?"#111":"#fff";
 
 /* ---------- tap ripple: a little wave from your finger ---------- */
@@ -824,9 +829,9 @@ function drawSet(){
   const row=(k,i,t,v)=>'<button class="srow" data-s="'+k+'"><span class="ti">'+ic(i,24)+'</span><span class="sx"><b>'+t+'</b><small>'+v+'</small></span><span class="chv">'+ic("chev",20)+'</span></button>';
   $("setb").innerHTML='<div class="slist">'+row("theme","theme","Theme &amp; colour",(TN[set.theme]||"System")+' · <i class="dot" style="background:'+set.acc+';margin:0 5px 0 6px"></i>'+(AN[set.acc]||"Custom "+set.acc)+" · "+moName())
    +row("viz","eq","Player visualization",vzName())
-   +row("ins","dl","Install app","Add Wave to your home screen")+'</div>';
+   +row("bak","folder","Backup &amp; restore",bkAgo())+row("ins","dl","Install app","Add Wave to your home screen")+'</div>';
 }
-$("setb").onclick=e=>{const r=e.target.closest("[data-s]");if(!r)return;({theme:themePage,viz:vizPage,ins:install})[r.dataset.s]()};
+$("setb").onclick=e=>{const r=e.target.closest("[data-s]");if(!r)return;({theme:themePage,viz:vizPage,ins:install,bak:backupPage})[r.dataset.s]()};
 $("spb").onclick=()=>closeTo("setp");
 function themePage(){
   const y=document.querySelector("#pgp").scrollTop;
@@ -850,6 +855,73 @@ function vizPage(){
   const z=vzCur();
   openPage("Player visualization",'<div class="vgrid">'+VZ.map(x=>'<button class="opt'+(x[0]==z?" on":"")+'" data-z="'+x[0]+'">'+x[1]+'<span class="rd">'+(x[0]==z?ic("check",14):"")+'</span></button>').join("")+'</div>',null);
   $("pgb").onclick=e=>{const a=e.target.closest("[data-z]");if(!a)return;set.viz=a.dataset.z;saveSet();applyViz();vizPage();drawSet()};
+}
+/* ---------- backup & restore ---------- */
+async function makeBackup(){
+  const all=tracks.concat(trash);
+  if(!all.length&&!pls.length)return toast("Nothing to back up yet");
+  toast("Preparing backup\u2026");
+  try{
+    const parts=[],metas=[];
+    for(const t of all){
+      const m={};for(const k in t)if(k!="blob")m[k]=t[k];
+      const b=t.blob;
+      if(b&&b.size){m.__bs=b.size;m.__bt=b.type||"";m.__bn=b.name||"";parts.push(b)}else m.__bs=0;
+      metas.push(m);
+    }
+    let last=null;try{last=localStorage.getItem("wave_last")}catch(e){}
+    const man={app:"wave",v:1,date:Date.now(),pls:pls,set:set,last:last,av:avatar?{f:avatar,t:avthumb}:null,tracks:metas};
+    const mb=new TextEncoder().encode(JSON.stringify(man)),hd=new Uint8Array(12);
+    hd.set(new TextEncoder().encode(BK_MAGIC),0);new DataView(hd.buffer).setUint32(8,mb.length);
+    const blob=new Blob([hd,mb].concat(parts),{type:"application/octet-stream"});
+    const d=new Date(),p=n=>String(n).padStart(2,"0"),name="wave-backup-"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+".wavebackup";
+    const u=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),120000);
+    try{localStorage.setItem("wave_bk",String(Date.now()))}catch(e){}
+    drawSet();if($("pgt").textContent=="Backup & restore")backupPage();
+    toast("Backup saved: "+name);
+  }catch(e){toast("Could not create the backup. Free some space and try again.")}
+}
+async function restoreBackup(f){
+  try{
+    const dec=new TextDecoder();
+    if(f.size<12||dec.decode(await f.slice(0,8).arrayBuffer())!=BK_MAGIC)return toast("This is not a Wave backup file");
+    const ml=new DataView(await f.slice(8,12).arrayBuffer()).getUint32(0);
+    const man=JSON.parse(dec.decode(await f.slice(12,12+ml).arrayBuffer()));
+    if(!man||man.app!="wave"||!Array.isArray(man.tracks))return toast("This is not a Wave backup file");
+    const when=man.date?new Date(man.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"";
+    if(!confirm("Restore backup"+(when?" from "+when:"")+"?\n\n"+man.tracks.length+" items and "+(man.pls||[]).length+" playlists will be added. Nothing you already have is deleted."))return;
+    if(!(await open))return toast("This browser cannot store the library");
+    const have=new Set(tracks.concat(trash).map(x=>x.id));
+    let off=12+ml,added=0,failed=0;
+    for(let i=0;i<man.tracks.length;i++){
+      const m=man.tracks[i],sz=m.__bs||0,start=off;off+=sz;
+      if(have.has(m.id))continue;
+      const t={};for(const k in m)if(k.slice(0,2)!="__")t[k]=m[k];
+      if(sz){const sl=f.slice(start,start+sz,m.__bt||"");t.blob=m.__bn?new File([sl],m.__bn,{type:m.__bt||""}):sl}
+      const ok=await put(t);
+      if(ok==null){failed++;if(failed>=3){toast("Stopped: the device ran out of space");break}continue}
+      added++;toast("Restoring "+(i+1)+" of "+man.tracks.length+"\u2026");
+    }
+    (man.pls||[]).forEach(p=>{const e=pls.find(x=>x.id==p.id);if(!e)pls.push(p);else p.ids.forEach(id=>{if(!e.ids.includes(id))e.ids.push(id)})});
+    savePl();
+    if(man.set&&typeof man.set=="object"){Object.assign(set,man.set);saveSet();try{applyTheme();applyViz()}catch(e){}}
+    if(man.av&&man.av.f){avatar=man.av.f;avthumb=man.av.t;await avSave();renderAv()}
+    const a=await dbx("readonly",s=>s.getAll());
+    if(a){const all=a.map(t=>(t.ord==null&&(t.ord=t.added),t));trash=all.filter(t=>t.trashed);tracks=all.filter(t=>!t.trashed).sort((x,y)=>x.added-y.added)}
+    trashN();render();drawSet();
+    if($("pgt").textContent=="Backup & restore")backupPage();
+    toast(failed?"Restored "+added+" items, "+failed+" could not be saved":"Restored. "+added+" new items added");
+  }catch(e){toast("Could not read that backup file")}
+}
+function backupPage(){
+  openPage("Backup & restore",
+   '<div class="row sub" style="padding:14px 20px;font-size:14px;line-height:1.5">'+bkAgo()+'.<br>A backup is one file with all your songs, videos, playlists, favorites, trash, settings and profile photo. Keep it somewhere safe, for example Google Drive. The file is as big as your library ('+fmtB(tracks.concat(trash).reduce((a,t)=>a+(t.blob&&t.blob.size||0),0))+').</div>'
+   +'<div style="padding:4px 16px;display:flex;flex-direction:column;gap:10px"><button class="pb" id="bkm" style="width:100%">Save backup file</button><button class="pb o" id="bkr" style="width:100%">Restore from backup</button></div>'
+   +'<div class="row sub" style="padding:14px 20px;font-size:14px;line-height:1.5">Restoring only adds what is missing. It never deletes anything you already have, so it is safe to use on a new phone or after a reset.</div>',null);
+  $("bkm").onclick=makeBackup;
+  $("bkr").onclick=()=>{const i=document.createElement("input");i.type="file";i.onchange=()=>{const f=i.files[0];if(f)restoreBackup(f)};i.click()};
 }
 let dip=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dip=e});
 function openPage(title,html,save){
@@ -1202,7 +1274,20 @@ function vizSheet(){
  });
 }
 $("fvz").onclick=vizSheet;
-$("stage").onclick=e=>{if(cur&&cur.type=="video")return;const i=VZ.findIndex(z=>z[0]==(vzCur()));set.viz=VZ[(i+1)%VZ.length][0];saveSet();applyViz();toast(vzName())};
+/* Double-tap left = back 10s, right = forward 10s (keep tapping to keep skipping). Single tap on the middle still changes the visual on music; left/right single taps do nothing. */
+(function(){const st=$("stage"),SK=10;let lt=0,side=0,multi=0,tmr=0,acc=0,hid=0;
+const ind=document.createElement("div");ind.className="dtk";st.appendChild(ind);
+const zone=x=>{const r=st.getBoundingClientRect(),p=(x-r.left)/r.width;return p<.4?-1:p>.6?1:0};
+const single=()=>{if(cur&&cur.type=="video")return;const i=VZ.findIndex(z=>z[0]==(vzCur()));set.viz=VZ[(i+1)%VZ.length][0];saveSet();applyViz();toast(vzName())};
+function jump(z,reset){if(!cur)return;const d=v.duration;if(reset)acc=0;acc+=SK;
+ try{let t=v.currentTime+z*SK;t=Math.max(0,d&&isFinite(d)?Math.min(t,Math.max(0,d-.25)):t);v.currentTime=t}catch(e){}
+ ind.className="dtk on "+(z<0?"l":"r");ind.innerHTML=(z<0?"\u23EA":"\u23E9")+"<b>"+acc+" sec</b>";
+ clearTimeout(hid);hid=setTimeout(()=>{ind.className="dtk"},650)}
+st.onclick=e=>{const now=Date.now(),z=zone(e.clientX);
+ if(z&&multi&&z==side&&now-lt<600){lt=now;jump(z);return}
+ if(z&&z==side&&now-lt<300){clearTimeout(tmr);multi=1;lt=now;jump(z,1);return}
+ lt=now;side=z;multi=0;
+ if(!z)single()}})();
 $("v").addEventListener("play",()=>{if(actx&&actx.state=="suspended")actx.resume().catch(()=>{});vzLoop()});
 
 /* ---------- resume last track ---------- */

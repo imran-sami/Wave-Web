@@ -21,3 +21,7 @@ MUSIC APP - how to install it on your phone
 9) Motion style: Settings > Theme & colour > Motion style. 12 moving styles (Waves, Bubbles, Aurora, Shimmer, Glow pulse, Ripples, Sparkles, Snowfall, Flow, Neon ring, Equalizer, Scanner) or None.
 
 10) If Chrome says "This app cannot be installed": upload the NEW files over the old site, open the link once, wait 5 seconds, close the tab, open the link again, then menu > Install app. If it still fails, Chrome menu > Settings > Site settings > All sites > your site > Clear & reset, then open it again.
+
+11) Backup & restore: Settings > Backup & restore. "Save backup file" makes one .wavebackup file with all your songs, videos, playlists, favorites, trash, settings and profile photo. Keep it somewhere safe (for example Google Drive). "Restore from backup" adds back anything that is missing and never deletes what you already have, so it is safe to use on a new phone or after a reset. Back up before you change hosting links or clear browser data.
+
+12) Player: double-tap the left side of the player to go back 10 seconds and the right side to go forward 10 seconds (keep tapping to keep skipping). On music, tapping the middle changes the visual.
