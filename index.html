@@ -857,7 +857,7 @@ function settings(){
 function drawSet(){
   const row=(k,i,t,v)=>'<button class="srow" data-s="'+k+'"><span class="ti">'+ic(i,24)+'</span><span class="sx"><b>'+t+'</b><small>'+v+'</small></span><span class="chv">'+ic("chev",20)+'</span></button>';
   $("setb").innerHTML='<div class="slist">'+row("theme","theme","Theme &amp; colour",(TN[set.theme]||"System")+' · <i class="dot" style="background:'+set.acc+';margin:0 5px 0 6px"></i>'+(AN[set.acc]||"Custom "+set.acc)+" · "+moName())
-   +row("snd","eq","Sound &amp; video quality",(sndCfg().on?"Enhanced · "+sndCfg().boost+"% volume":"Off")+" · auto highest resolution")
+   +row("snd","eq","Sound &amp; video quality",(sndCfg().mode=="karaoke"?"Karaoke · ":sndCfg().mode=="vocal"?"Vocal focus · ":"")+(sndCfg().on?"Enhanced · "+sndCfg().boost+"% volume":"Off")+" · auto highest resolution")
    +row("viz","eq","Player visualization",vzName())
    +row("bak","folder","Backup &amp; restore",bkAgo())+row("ins","dl","Install app","Add Wave to your home screen")+'</div>';
 }
@@ -1159,14 +1159,16 @@ function sndPage(){
  const sl=(k,t,min,max,val,u)=>'<div style="padding:10px 20px"><div style="display:flex;justify-content:space-between;font-weight:600"><span>'+t+'</span><span id="o_'+k+'">'+val+u+'</span></div><input type="range" data-k="'+k+'" min="'+min+'" max="'+max+'" value="'+val+'" style="--p:'+Math.round((val-min)/(max-min)*100)+'%"></div>';
  const html='<div class="aip" style="padding-top:2px"><span>Sound is processed at the highest sample rate your phone allows (up to 192 kHz) with equalizer, compressor and a safe limiter. This improves how it sounds, but cannot add detail that is missing from the original file. Videos always play at the full resolution of the file (1080p, 4K, 8K).</span></div>'
  +'<div class="vgrid"><button class="opt'+(c.on?" on":"")+'" data-a="on">Sound enhance<span class="rd">'+(c.on?ic("check",14):"")+'</span></button><button class="opt'+(q.sharp?" on":"")+'" data-a="sharp">Video sharpen<span class="rd">'+(q.sharp?ic("check",14):"")+'</span></button></div>'
+ +'<h4 class="sech">Listening mode</h4><div class="vgrid" style="grid-template-columns:1fr">'+[["orig","Original","Normal song, nothing removed"],["karaoke","Karaoke (less vocal)","Reduces the singer, keeps music and bass"],["vocal","Vocal focus","Singer louder, music softer"]].map(x=>'<button class="opt'+(c.mode==x[0]?" on":"")+'" data-md="'+x[0]+'"><span>'+x[1]+'<small style="display:block;font-weight:400;color:var(--sub);font-size:13px;margin-top:2px">'+x[2]+'</small></span><span class="rd">'+(c.mode==x[0]?ic("check",14):"")+'</span></button>').join("")+'</div>'
  +'<h4 class="sech">Sound preset</h4><div class="vgrid">'+Object.keys(SND_PRE).map(k=>{const on=((set.snd||{}).pre||"studio")==k;return'<button class="opt'+(on?" on":"")+'" data-p="'+k+'">'+SND_PRE[k].n+'<span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
  +'<h4 class="sech">Volume limit</h4>'+sl("boost","Volume boost",100,400,c.boost,"%")
  +'<h4 class="sech">Fine tune</h4>'+sl("b","Bass",-6,12,Math.round(c.b),"dB")+sl("m","Vocal / mid",-6,12,Math.round(c.m),"dB")+sl("t","Treble",-6,12,Math.round(c.t),"dB")
- +'<div class="aip"><span>Volume boost above 100% is protected by a limiter so loud songs do not crack. If a song sounds harsh, lower the boost.'+(IOS?' On iPhone the browser does not allow sound processing, so only video sharpen works there.':'')+'</span></div>';
+ +'<div class="aip"><span>Karaoke and Vocal focus are approximate: they work best on stereo songs where the singer is in the centre. Voice effects and echo can stay, and mono files will go quiet in Karaoke. Volume boost above 100% is protected by a limiter so loud songs do not crack. If a song sounds harsh, lower the boost.'+(IOS?' On iPhone the browser does not allow sound processing, so only video sharpen works there.':'')+'</span></div>';
  const y=$("pgp").scrollTop;openPage("Sound & video quality",html,null);$("pgp").scrollTop=y;
  const B=$("pgb");
- B.onclick=e=>{const a=e.target.closest("[data-a]"),p=e.target.closest("[data-p]");if(!a&&!p)return;
+ B.onclick=e=>{const a=e.target.closest("[data-a]"),p=e.target.closest("[data-p]"),md=e.target.closest("[data-md]");if(!a&&!p&&!md)return;
   if(a){if(a.dataset.a=="on")set.snd=Object.assign({},set.snd,{on:c.on?0:1});else set.vid=Object.assign({},set.vid,{sharp:q.sharp?0:1})}
+  else if(md)set.snd=Object.assign({},set.snd,{mode:md.dataset.md});
   else set.snd=Object.assign({},set.snd,{pre:p.dataset.p,b:null,m:null,t:null});
   saveSet();sndApply();vqApply();sndPage();drawSet()};
  B.oninput=e=>{const r=e.target;if(!r.dataset.k)return;const k=r.dataset.k,val=+r.value,mn=+r.min,mx=+r.max;r.style.setProperty("--p",Math.round((val-mn)/(mx-mn)*100)+"%");$("o_"+k).textContent=val+(k=="boost"?"%":"dB");
@@ -1182,13 +1184,14 @@ function vzName(){return(VZ.find(z=>z[0]==(vzCur()))||VZ[0])[1]}
 function applyViz(){const m=vzCur();$("stage").dataset.viz=m;if(CV.includes(m))$("stage").dataset.cv=1;else delete $("stage").dataset.cv;$("fvz").textContent=vzName();vzLoop()}
 var sndN=null;
 const SND_PRE={studio:{n:"Studio HD",b:3,m:1,t:3,c:1},bass:{n:"Deep bass",b:8,m:0,t:2,c:1},vocal:{n:"Clear vocal",b:1,m:4,t:3,c:1},bright:{n:"Bright",b:1,m:1,t:7,c:1},flat:{n:"Flat",b:0,m:0,t:0,c:0}};
-function sndCfg(){const d={on:1,pre:"studio",boost:150,b:null,m:null,t:null};const o=Object.assign(d,set.snd||{});const p=SND_PRE[o.pre]||SND_PRE.studio;return{on:!!o.on,boost:Math.max(100,Math.min(400,+o.boost||150)),b:o.b==null?p.b:+o.b,m:o.m==null?p.m:+o.m,t:o.t==null?p.t:+o.t,c:p.c}}
+function sndCfg(){const d={on:1,pre:"studio",boost:150,mode:"orig",b:null,m:null,t:null};const o=Object.assign(d,set.snd||{});const p=SND_PRE[o.pre]||SND_PRE.studio;return{mode:["orig","karaoke","vocal"].includes(o.mode)?o.mode:"orig",on:!!o.on,boost:Math.max(100,Math.min(400,+o.boost||150)),b:o.b==null?p.b:+o.b,m:o.m==null?p.m:+o.m,t:o.t==null?p.t:+o.t,c:p.c}}
 function sndApply(){
  if(!sndN)return;const c=sndCfg(),T=sndN.ctx.currentTime;
  const on=c.on;
  sndN.lo.gain.setTargetAtTime(on?c.b:0,T,.03);sndN.mid.gain.setTargetAtTime(on?c.m:0,T,.03);sndN.hi.gain.setTargetAtTime(on?c.t:0,T,.03);
  sndN.cmp.threshold.setTargetAtTime(on&&c.c?-14:0,T,.03);sndN.cmp.ratio.setTargetAtTime(on&&c.c?4:1,T,.03);
  sndN.gain.gain.setTargetAtTime(on?c.boost/100:1,T,.03);
+ {const md=c.mode,k=md=='karaoke',vf=md=='vocal',g=(n,x)=>n.gain.setTargetAtTime(x,T,.04);g(sndN.dry,k?0:vf?.35:1);g(sndN.side,k?1.6:0);g(sndN.low,k?1:0);g(sndN.voc,vf?1.4:0)}
  sndN.lim.threshold.setTargetAtTime(on?-1.5:0,T,.01);sndN.lim.ratio.setTargetAtTime(on?20:1,T,.01);
 }
 function audioInit(){
@@ -1202,8 +1205,17 @@ function audioInit(){
   const cmp=actx.createDynamicsCompressor();cmp.knee.value=18;cmp.attack.value=.01;cmp.release.value=.25;
   const gain=actx.createGain(),lim=actx.createDynamicsCompressor();lim.knee.value=0;lim.attack.value=.002;lim.release.value=.1;
   an=actx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.8;
-  s.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(cmp);cmp.connect(gain);gain.connect(lim);lim.connect(an);an.connect(actx.destination);
-  sndN={ctx:actx,lo,mid,hi,cmp,gain,lim};sndApply();
+  const mi=actx.createGain(),G=()=>actx.createGain();
+  const dry=G(),side=G(),low=G(),voc=G(),sp=actx.createChannelSplitter(2),gl=G(),gr=G(),sum=G(),hp=f("highpass",130,.7),lp=f("lowpass",150,.7);
+  gl.gain.value=.5;gr.gain.value=-.5;sum.channelCount=1;sum.channelCountMode="explicit";sum.channelInterpretation="speakers";
+  s.connect(dry);dry.connect(mi);
+  s.connect(sp);sp.connect(gl,0);sp.connect(gr,1);gl.connect(sum);gr.connect(sum);sum.connect(hp);hp.connect(side);side.connect(mi);
+  const lp2=f("lowpass",150,.7);s.connect(lp);lp.connect(lp2);lp2.connect(low);low.connect(mi);
+  const mono=G();mono.channelCount=1;mono.channelCountMode="explicit";mono.channelInterpretation="speakers";
+  const vh=f("highpass",200,.7),vl=f("lowpass",4500,.7),vp=f("peaking",2500,1);vp.gain.value=3;
+  s.connect(mono);mono.connect(vh);vh.connect(vl);vl.connect(vp);vp.connect(voc);voc.connect(mi);
+  mi.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(cmp);cmp.connect(gain);gain.connect(lim);lim.connect(an);an.connect(actx.destination);
+  sndN={ctx:actx,lo,mid,hi,cmp,gain,lim,dry,side,low,voc};sndApply();
   fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize);
  }
  catch(e){vzFail=1;an=null;sndN=null}
