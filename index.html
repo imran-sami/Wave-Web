@@ -171,7 +171,9 @@ body.hasmini .app{padding-bottom:116px}
 .arm::before{content:"";position:absolute;top:-8px;left:-9px;width:25px;height:25px;border-radius:50%;background:#bdbdbd;border:5px solid #888}
 .arm::after{content:"";position:absolute;bottom:-8px;left:-4px;width:15px;height:20px;border-radius:3px;background:#444}
 .playing .arm{transform:rotate(6deg)}
-#v{display:none;width:100%;height:100%;border-radius:18px;object-fit:contain;background:#000}
+#v{display:none;width:100%;height:100%;border-radius:18px;object-fit:contain;background:#000;image-rendering:auto;transform:translateZ(0)}
+#v.hd{filter:contrast(1.05) saturate(1.1) url(#shp)}
+.stage{position:relative}.vq{position:absolute;top:10px;right:10px;z-index:3;padding:3px 9px;border-radius:8px;background:rgba(0,0,0,.62);color:#fff;font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.4px;pointer-events:none}.vq.hide{display:none}
 .stage.video{aspect-ratio:16/9;width:100%;max-width:680px;margin-top:26px}
 .stage.video #v{display:block}.stage.video .dsc,.stage.video .arm{display:none}
 #viz{display:none;position:absolute;inset:0;width:100%;height:100%}
@@ -403,7 +405,7 @@ setTimeout(hide,6000)})();</script>
 
 <section id="full">
  <div class="ft"><button class="ib" id="fcl" data-ic="down" data-s="28"></button><span>Now playing</span><button class="ib" id="fmore" data-ic="more" data-s="24"></button></div>
- <div class="stage" id="stage"><div class="dsc"><div class="th" id="lab"></div></div><div class="arm"></div><video id="v" playsinline webkit-playsinline x-webkit-airplay="allow" preload="metadata"></video><canvas id="viz"></canvas></div>
+ <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="shp" color-interpolation-filters="sRGB"><feConvolveMatrix order="3" kernelMatrix="0 -.5 0 -.5 3 -.5 0 -.5 0" preserveAlpha="true"/></filter></svg><div class="stage" id="stage"><div class="dsc"><div class="th" id="lab"></div></div><div class="arm"></div><video id="v" playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto"></video><span id="vq" class="vq hide"></span><canvas id="viz"></canvas></div>
  <div class="fw">
   <div class="ttl"><div class="tx"><b id="ft">Nothing playing</b><small id="fs"></small></div><button class="ib" id="fh"></button></div>
   <input type="range" id="fsk" min="0" max="1000" value="0" style="margin-top:14px">
@@ -855,10 +857,11 @@ function settings(){
 function drawSet(){
   const row=(k,i,t,v)=>'<button class="srow" data-s="'+k+'"><span class="ti">'+ic(i,24)+'</span><span class="sx"><b>'+t+'</b><small>'+v+'</small></span><span class="chv">'+ic("chev",20)+'</span></button>';
   $("setb").innerHTML='<div class="slist">'+row("theme","theme","Theme &amp; colour",(TN[set.theme]||"System")+' · <i class="dot" style="background:'+set.acc+';margin:0 5px 0 6px"></i>'+(AN[set.acc]||"Custom "+set.acc)+" · "+moName())
+   +row("snd","eq","Sound &amp; video quality",(sndCfg().on?"Enhanced · "+sndCfg().boost+"% volume":"Off")+" · auto highest resolution")
    +row("viz","eq","Player visualization",vzName())
    +row("bak","folder","Backup &amp; restore",bkAgo())+row("ins","dl","Install app","Add Wave to your home screen")+'</div>';
 }
-$("setb").onclick=e=>{const r=e.target.closest("[data-s]");if(!r)return;({theme:themePage,viz:vizPage,ins:install,bak:backupPage})[r.dataset.s]()};
+$("setb").onclick=e=>{const r=e.target.closest("[data-s]");if(!r)return;({theme:themePage,viz:vizPage,snd:sndPage,ins:install,bak:backupPage})[r.dataset.s]()};
 $("spb").onclick=()=>closeTo("setp");
 function themePage(){
   const y=document.querySelector("#pgp").scrollTop;
@@ -933,7 +936,7 @@ async function restoreBackup(f){
     }
     (man.pls||[]).forEach(p=>{const e=pls.find(x=>x.id==p.id);if(!e)pls.push(p);else p.ids.forEach(id=>{if(!e.ids.includes(id))e.ids.push(id)})});
     savePl();
-    if(man.set&&typeof man.set=="object"){Object.assign(set,man.set);saveSet();try{applyTheme();applyViz()}catch(e){}}
+    if(man.set&&typeof man.set=="object"){Object.assign(set,man.set);saveSet();try{applyTheme();applyViz();sndApply()}catch(e){}}
     if(man.av&&man.av.f){avatar=man.av.f;avthumb=man.av.t;await avSave();renderAv()}
     const a=await dbx("readonly",s=>s.getAll());
     if(a){const all=a.map(t=>(t.ord==null&&(t.ord=t.added),t));trash=all.filter(t=>t.trashed);tracks=all.filter(t=>!t.trashed).sort((x,y)=>x.added-y.added)}
@@ -1037,6 +1040,7 @@ async function play(id,ids){
  if(!t.blob||!t.blob.size){toast("This file is empty or missing. Please add it again.");return}
  if(!t.blob.type||t.blob.type=="application/octet-stream")t.blob=fixBlob(new File([t.blob],t.name+"."+(t.type=="video"?"mp4":"m4a"),{type:t.blob.type}));
  url=URL.createObjectURL(t.blob);v.src=url;v.defaultPlaybackRate=rate;v.playbackRate=rate;
+ try{audioInit();if(actx&&actx.state!="running")actx.resume().catch(()=>{})}catch(e){}
  try{v.load();await v.play()}catch(e){if(e&&e.name=="NotSupportedError")badMedia();else if(e&&e.name=="NotAllowedError")toast("Tap play to start")}
  ui();ms();
 }
@@ -1139,6 +1143,36 @@ function syncIcons(){
 }
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=0;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=1;location.reload()}});navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{})}}catch(e){}
 
+
+/* ---------- video quality (auto highest) ---------- */
+function vqLabel(w,h){const m=Math.max(w,h),n=Math.min(w,h);if(m>=7680)return"8K";if(m>=3840)return"4K";if(m>=2560)return"1440p";if(m>=1920)return"1080p HD";if(m>=1280)return"720p";return n?n+"p":""}
+function vqApply(){
+ const b=$("vq"),isV=cur&&cur.type=="video"&&v.videoWidth>0;
+ if(!isV){b.classList.add("hide");v.classList.remove("hd");return}
+ b.textContent=vqLabel(v.videoWidth,v.videoHeight);b.classList.toggle("hide",!b.textContent);
+ const q=Object.assign({sharp:1},set.vid||{});
+ v.classList.toggle("hd",!!q.sharp&&Math.max(v.videoWidth,v.videoHeight)<3840);
+}
+v.addEventListener("loadedmetadata",vqApply);v.addEventListener("resize",vqApply);
+function sndPage(){
+ const c=sndCfg(),q=Object.assign({sharp:1},set.vid||{});
+ const sl=(k,t,min,max,val,u)=>'<div style="padding:10px 20px"><div style="display:flex;justify-content:space-between;font-weight:600"><span>'+t+'</span><span id="o_'+k+'">'+val+u+'</span></div><input type="range" data-k="'+k+'" min="'+min+'" max="'+max+'" value="'+val+'" style="--p:'+Math.round((val-min)/(max-min)*100)+'%"></div>';
+ const html='<div class="aip" style="padding-top:2px"><span>Sound is processed at the highest sample rate your phone allows (up to 192 kHz) with equalizer, compressor and a safe limiter. This improves how it sounds, but cannot add detail that is missing from the original file. Videos always play at the full resolution of the file (1080p, 4K, 8K).</span></div>'
+ +'<div class="vgrid"><button class="opt'+(c.on?" on":"")+'" data-a="on">Sound enhance<span class="rd">'+(c.on?ic("check",14):"")+'</span></button><button class="opt'+(q.sharp?" on":"")+'" data-a="sharp">Video sharpen<span class="rd">'+(q.sharp?ic("check",14):"")+'</span></button></div>'
+ +'<h4 class="sech">Sound preset</h4><div class="vgrid">'+Object.keys(SND_PRE).map(k=>{const on=((set.snd||{}).pre||"studio")==k;return'<button class="opt'+(on?" on":"")+'" data-p="'+k+'">'+SND_PRE[k].n+'<span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
+ +'<h4 class="sech">Volume limit</h4>'+sl("boost","Volume boost",100,400,c.boost,"%")
+ +'<h4 class="sech">Fine tune</h4>'+sl("b","Bass",-6,12,Math.round(c.b),"dB")+sl("m","Vocal / mid",-6,12,Math.round(c.m),"dB")+sl("t","Treble",-6,12,Math.round(c.t),"dB")
+ +'<div class="aip"><span>Volume boost above 100% is protected by a limiter so loud songs do not crack. If a song sounds harsh, lower the boost.'+(IOS?' On iPhone the browser does not allow sound processing, so only video sharpen works there.':'')+'</span></div>';
+ const y=$("pgp").scrollTop;openPage("Sound & video quality",html,null);$("pgp").scrollTop=y;
+ const B=$("pgb");
+ B.onclick=e=>{const a=e.target.closest("[data-a]"),p=e.target.closest("[data-p]");if(!a&&!p)return;
+  if(a){if(a.dataset.a=="on")set.snd=Object.assign({},set.snd,{on:c.on?0:1});else set.vid=Object.assign({},set.vid,{sharp:q.sharp?0:1})}
+  else set.snd=Object.assign({},set.snd,{pre:p.dataset.p,b:null,m:null,t:null});
+  saveSet();sndApply();vqApply();sndPage();drawSet()};
+ B.oninput=e=>{const r=e.target;if(!r.dataset.k)return;const k=r.dataset.k,val=+r.value,mn=+r.min,mx=+r.max;r.style.setProperty("--p",Math.round((val-mn)/(mx-mn)*100)+"%");$("o_"+k).textContent=val+(k=="boost"?"%":"dB");
+  const o=Object.assign({},set.snd);if(k=="boost")o.boost=val;else{const cc=sndCfg();o.b=cc.b;o.m=cc.m;o.t=cc.t;o[k]=val}set.snd=o;sndApply()};
+ B.onchange=()=>saveSet();
+}
 /* ---------- visualizer ---------- */
 var VZ=[["halo","Halo"],["silk","Silk"],["pillars","Pillars"],["bars","Spectrum"],["orb","Pulse"],["rings","Rings"],["terrain","Terrain"],["ripple","Ripple"],["orbit","Orbit"],["breath","Breath"],["hairline","Hairline"],["arc","Arc"],["bloom","Bloom"],["beads","Beads"],["tide","Tide"],["trace","Trace"],["eclipse","Eclipse"],["grid","Grid"],["level","Level"],["aura","Aura"]],CV=VZ.map(z=>z[0]),pa=[],orA=0,hs=new Array(80).fill(0),hc=0;
 function vzCur(){return VZ.some(z=>z[0]==set.viz)?set.viz:VZ[0][0]}
@@ -1146,10 +1180,33 @@ function rgba(h,a){const n=parseInt(h.slice(1,7),16);return"rgba("+(n>>16)+","+(
 var vzc=$("viz"),vx=vzc.getContext("2d"),actx=null,an=null,fd=null,td=null,raf=0,vzFail=0,sm=[],t0=performance.now();
 function vzName(){return(VZ.find(z=>z[0]==(vzCur()))||VZ[0])[1]}
 function applyViz(){const m=vzCur();$("stage").dataset.viz=m;if(CV.includes(m))$("stage").dataset.cv=1;else delete $("stage").dataset.cv;$("fvz").textContent=vzName();vzLoop()}
+var sndN=null;
+const SND_PRE={studio:{n:"Studio HD",b:3,m:1,t:3,c:1},bass:{n:"Deep bass",b:8,m:0,t:2,c:1},vocal:{n:"Clear vocal",b:1,m:4,t:3,c:1},bright:{n:"Bright",b:1,m:1,t:7,c:1},flat:{n:"Flat",b:0,m:0,t:0,c:0}};
+function sndCfg(){const d={on:1,pre:"studio",boost:150,b:null,m:null,t:null};const o=Object.assign(d,set.snd||{});const p=SND_PRE[o.pre]||SND_PRE.studio;return{on:!!o.on,boost:Math.max(100,Math.min(400,+o.boost||150)),b:o.b==null?p.b:+o.b,m:o.m==null?p.m:+o.m,t:o.t==null?p.t:+o.t,c:p.c}}
+function sndApply(){
+ if(!sndN)return;const c=sndCfg(),T=sndN.ctx.currentTime;
+ const on=c.on;
+ sndN.lo.gain.setTargetAtTime(on?c.b:0,T,.03);sndN.mid.gain.setTargetAtTime(on?c.m:0,T,.03);sndN.hi.gain.setTargetAtTime(on?c.t:0,T,.03);
+ sndN.cmp.threshold.setTargetAtTime(on&&c.c?-14:0,T,.03);sndN.cmp.ratio.setTargetAtTime(on&&c.c?4:1,T,.03);
+ sndN.gain.gain.setTargetAtTime(on?c.boost/100:1,T,.03);
+ sndN.lim.threshold.setTargetAtTime(on?-1.5:0,T,.01);sndN.lim.ratio.setTargetAtTime(on?20:1,T,.01);
+}
 function audioInit(){
- if(an||vzFail)return;if(IOS){vzFail=1;return}
- try{const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();const s=actx.createMediaElementSource(v);an=actx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.8;s.connect(an);an.connect(actx.destination);fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize)}
- catch(e){vzFail=1;an=null}
+ if(sndN||vzFail)return;if(IOS){vzFail=1;return}
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;
+  for(const sr of [192000,96000,48000,0]){try{actx=sr?new AC({sampleRate:sr,latencyHint:"playback"}):new AC({latencyHint:"playback"});break}catch(e){actx=null}}
+  if(!actx)actx=new AC();
+  const s=actx.createMediaElementSource(v),f=(type,fr,q)=>{const n=actx.createBiquadFilter();n.type=type;n.frequency.value=fr;if(q)n.Q.value=q;return n};
+  const lo=f("lowshelf",110),mid=f("peaking",2800,.9),hi=f("highshelf",9000);
+  const cmp=actx.createDynamicsCompressor();cmp.knee.value=18;cmp.attack.value=.01;cmp.release.value=.25;
+  const gain=actx.createGain(),lim=actx.createDynamicsCompressor();lim.knee.value=0;lim.attack.value=.002;lim.release.value=.1;
+  an=actx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.8;
+  s.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(cmp);cmp.connect(gain);gain.connect(lim);lim.connect(an);an.connect(actx.destination);
+  sndN={ctx:actx,lo,mid,hi,cmp,gain,lim};sndApply();
+  fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize);
+ }
+ catch(e){vzFail=1;an=null;sndN=null}
 }
 function vzOn(){const m=vzCur();return CV.includes(m)&&$("full").classList.contains("open")&&cur&&cur.type!="video"}
 function vzLoop(){

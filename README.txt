@@ -27,3 +27,5 @@ MUSIC APP - how to install it on your phone
 12) Player: double-tap the left side of the player to go back 10 seconds and the right side to go forward 10 seconds (keep tapping to keep skipping). On music, tapping the middle changes the visual.
 
 13) Opening screen: every time you open the app, a short animated splash (logo, ripples and the name "WAVE", with the version number at the bottom) shows for about 1.6 seconds, then fades into the app. It shows once per opening, not on every page refresh.
+
+14) Sound & video quality: Settings > Sound & video quality. Sound enhance (equalizer, compressor, safe limiter) runs on every song and video automatically, at the highest sample rate your phone allows (up to 192 kHz). "Volume boost" lets you go up to 400% (default 150%). Presets: Studio HD, Deep bass, Clear vocal, Bright, Flat. Videos always play at the file's full resolution (1080p, 4K, 8K) and a quality badge shows in the corner. Video sharpen is optional. Note: processing improves the sound but cannot add detail missing from the original mp3. Not available for sound on iPhone (browser limit).
