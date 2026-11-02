@@ -1157,7 +1157,7 @@ v.addEventListener("loadedmetadata",vqApply);v.addEventListener("resize",vqApply
 function sndPage(){
  const c=sndCfg(),q=Object.assign({sharp:1},set.vid||{});
  const sl=(k,t,min,max,val,u)=>'<div style="padding:10px 20px"><div style="display:flex;justify-content:space-between;font-weight:600"><span>'+t+'</span><span id="o_'+k+'">'+val+u+'</span></div><input type="range" data-k="'+k+'" min="'+min+'" max="'+max+'" value="'+val+'" style="--p:'+Math.round((val-min)/(max-min)*100)+'%"></div>';
- const html='<div class="aip" style="padding-top:2px"><span>Sound is processed at the highest sample rate your phone allows (up to 192 kHz) with equalizer, compressor and a safe limiter. This improves how it sounds, but cannot add detail that is missing from the original file. Videos always play at the full resolution of the file (1080p, 4K, 8K).</span></div>'
+ const html='<div class="aip" style="padding-top:2px"><span>Sound is processed at your phone native sample rate with equalizer, compressor and a safe limiter. This improves how it sounds, but cannot add detail that is missing from the original file. Videos always play at the full resolution of the file (1080p, 4K, 8K).</span></div>'
  +'<div class="vgrid"><button class="opt'+(c.on?" on":"")+'" data-a="on">Sound enhance<span class="rd">'+(c.on?ic("check",14):"")+'</span></button><button class="opt'+(q.sharp?" on":"")+'" data-a="sharp">Video sharpen<span class="rd">'+(q.sharp?ic("check",14):"")+'</span></button></div>'
  +'<h4 class="sech">Listening mode</h4><div class="vgrid" style="grid-template-columns:1fr">'+[["orig","Original","Normal song, nothing removed"],["karaoke","Karaoke (less vocal)","Reduces the singer, keeps music and bass"],["vocal","Vocal focus","Singer louder, music softer"]].map(x=>'<button class="opt'+(c.mode==x[0]?" on":"")+'" data-md="'+x[0]+'"><span>'+x[1]+'<small style="display:block;font-weight:400;color:var(--sub);font-size:13px;margin-top:2px">'+x[2]+'</small></span><span class="rd">'+(c.mode==x[0]?ic("check",14):"")+'</span></button>').join("")+'</div>'
  +'<h4 class="sech">Sound preset</h4><div class="vgrid">'+Object.keys(SND_PRE).map(k=>{const on=((set.snd||{}).pre||"studio")==k;return'<button class="opt'+(on?" on":"")+'" data-p="'+k+'">'+SND_PRE[k].n+'<span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
@@ -1185,9 +1185,15 @@ function applyViz(){const m=vzCur();$("stage").dataset.viz=m;if(CV.includes(m))$
 var sndN=null;
 const SND_PRE={studio:{n:"Studio HD",b:3,m:1,t:3,c:1},bass:{n:"Deep bass",b:8,m:0,t:2,c:1},vocal:{n:"Clear vocal",b:1,m:4,t:3,c:1},bright:{n:"Bright",b:1,m:1,t:7,c:1},flat:{n:"Flat",b:0,m:0,t:0,c:0}};
 function sndCfg(){const d={on:1,pre:"studio",boost:150,mode:"orig",b:null,m:null,t:null};const o=Object.assign(d,set.snd||{});const p=SND_PRE[o.pre]||SND_PRE.studio;return{mode:["orig","karaoke","vocal"].includes(o.mode)?o.mode:"orig",on:!!o.on,boost:Math.max(100,Math.min(400,+o.boost||150)),b:o.b==null?p.b:+o.b,m:o.m==null?p.m:+o.m,t:o.t==null?p.t:+o.t,c:p.c}}
+function sndWire(md){
+ const N=sndN;if(N.md==md)return;
+ const off=n=>{try{N.s.disconnect(n)}catch(e){}};off(N.sp);off(N.lp);off(N.mono);
+ if(md=="karaoke"){N.s.connect(N.sp);N.s.connect(N.lp)}else if(md=="vocal")N.s.connect(N.mono);
+ N.md=md;
+}
 function sndApply(){
  if(!sndN)return;const c=sndCfg(),T=sndN.ctx.currentTime;
- const on=c.on;
+ const on=c.on;sndWire(c.mode);
  sndN.lo.gain.setTargetAtTime(on?c.b:0,T,.03);sndN.mid.gain.setTargetAtTime(on?c.m:0,T,.03);sndN.hi.gain.setTargetAtTime(on?c.t:0,T,.03);
  sndN.cmp.threshold.setTargetAtTime(on&&c.c?-14:0,T,.03);sndN.cmp.ratio.setTargetAtTime(on&&c.c?4:1,T,.03);
  sndN.gain.gain.setTargetAtTime(on?c.boost/100:1,T,.03);
@@ -1198,7 +1204,7 @@ function audioInit(){
  if(sndN||vzFail)return;if(IOS){vzFail=1;return}
  try{
   const AC=window.AudioContext||window.webkitAudioContext;
-  for(const sr of [192000,96000,48000,0]){try{actx=sr?new AC({sampleRate:sr,latencyHint:"playback"}):new AC({latencyHint:"playback"});break}catch(e){actx=null}}
+  try{actx=new AC({latencyHint:"playback"})}catch(e){actx=null}
   if(!actx)actx=new AC();
   const s=actx.createMediaElementSource(v),f=(type,fr,q)=>{const n=actx.createBiquadFilter();n.type=type;n.frequency.value=fr;if(q)n.Q.value=q;return n};
   const lo=f("lowshelf",110),mid=f("peaking",2800,.9),hi=f("highshelf",9000);
@@ -1209,13 +1215,13 @@ function audioInit(){
   const dry=G(),side=G(),low=G(),voc=G(),sp=actx.createChannelSplitter(2),gl=G(),gr=G(),sum=G(),hp=f("highpass",130,.7),lp=f("lowpass",150,.7);
   gl.gain.value=.5;gr.gain.value=-.5;sum.channelCount=1;sum.channelCountMode="explicit";sum.channelInterpretation="speakers";
   s.connect(dry);dry.connect(mi);
-  s.connect(sp);sp.connect(gl,0);sp.connect(gr,1);gl.connect(sum);gr.connect(sum);sum.connect(hp);hp.connect(side);side.connect(mi);
-  const lp2=f("lowpass",150,.7);s.connect(lp);lp.connect(lp2);lp2.connect(low);low.connect(mi);
+  sp.connect(gl,0);sp.connect(gr,1);gl.connect(sum);gr.connect(sum);sum.connect(hp);hp.connect(side);side.connect(mi);
+  const lp2=f("lowpass",150,.7);lp.connect(lp2);lp2.connect(low);low.connect(mi);
   const mono=G();mono.channelCount=1;mono.channelCountMode="explicit";mono.channelInterpretation="speakers";
   const vh=f("highpass",200,.7),vl=f("lowpass",4500,.7),vp=f("peaking",2500,1);vp.gain.value=3;
-  s.connect(mono);mono.connect(vh);vh.connect(vl);vl.connect(vp);vp.connect(voc);voc.connect(mi);
+  mono.connect(vh);vh.connect(vl);vl.connect(vp);vp.connect(voc);voc.connect(mi);
   mi.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(cmp);cmp.connect(gain);gain.connect(lim);lim.connect(an);an.connect(actx.destination);
-  sndN={ctx:actx,lo,mid,hi,cmp,gain,lim,dry,side,low,voc};sndApply();
+  sndN={ctx:actx,s,lo,mid,hi,cmp,gain,lim,dry,side,low,voc,sp,lp,mono,md:"orig"};sndApply();
   fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize);
  }
  catch(e){vzFail=1;an=null;sndN=null}
