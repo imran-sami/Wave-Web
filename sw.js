@@ -1,4 +1,4 @@
-const C="wave-v15",A=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png","./icon-maskable-192.png","./icon-maskable-512.png"];
+const C="wave-v16",A=["./","./index.html","./manifest.webmanifest","./icon-192.png","./icon-512.png","./icon-maskable-192.png","./icon-maskable-512.png"];
 /* strip the "redirected" flag so a cached page can be served for navigations */
 const clean=async r=>{if(!r||!r.redirected)return r;const b=await r.blob();return new Response(b,{status:r.status,statusText:r.statusText,headers:r.headers})};
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(C);for(const u of A){try{const r=await fetch(new Request(u,{cache:"reload"}));if(r.ok)await c.put(u,await clean(r))}catch(x){}}self.skipWaiting()})())});

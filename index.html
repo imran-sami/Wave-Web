@@ -335,6 +335,18 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 :root[data-fx="off"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,:root[data-fx="off"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after{display:none!important}
 :root[data-fx="off"] .wv .s,:root[data-fx="off"] .wv .m,:root[data-fx="off"] .playing .pp{animation:none!important}
 :root[data-fx="off"] .rip{display:none}
+
+/* ---------- wide screens (tablet, laptop, desktop): use the full width instead of a narrow centre column ---------- */
+@media(min-width:700px){
+ .app{max-width:none;padding-left:clamp(8px,3vw,56px);padding-right:clamp(8px,3vw,56px)}
+ .tiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+ .tile{padding:20px}.tile.wide{padding:16px 20px}
+ .grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+ #pgb,#setb{max-width:960px}
+ #mini{max-width:min(960px,calc(100% - 40px))}
+ .big{font-size:42px}
+}
+@media(min-width:1400px){.app{padding-left:clamp(56px,6vw,140px);padding-right:clamp(56px,6vw,140px)}}
 </style>
 </head>
 <body>
