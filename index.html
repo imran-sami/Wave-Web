@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f5f5f7">
+<meta name="theme-color" content="#121214">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="Wave">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -386,6 +386,9 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 <div id="toast"></div>
 <div id="avv"><button class="ib" id="avx" data-ic="close" data-s="26" aria-label="Close"></button><div id="avc"></div></div>
 <input type="file" id="pf" accept="image/*" hidden>
+<input type="file" id="fd" multiple hidden webkitdirectory>
+<input type="file" id="fa" multiple hidden accept="audio/*">
+<input type="file" id="fv" multiple hidden accept="video/*">
 <input type="file" id="fi" multiple hidden accept="audio/*,video/*,.mp3,.m4a,.mp4,.mkv,.webm,.flac,.wav,.ogg,.aac">
 <dialog id="dlg"></dialog>
 
@@ -469,14 +472,15 @@ const WV=(w,c)=>'<svg class="wv'+(c?" "+c:"")+'" viewBox="0 0 '+WP.w+' '+WP.h+'"
 document.querySelectorAll("[data-wv]").forEach(e=>e.innerHTML=WV(+e.dataset.wv,e.dataset.wc));
 const ic=(n,s=24,on)=>{const[k,d]=P[n];return'<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" '+(k=="f"||on?'fill="currentColor"':'fill="none"')+(k=="s"?' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"':'')+'><path d="'+d+'"/></svg>'};
 document.querySelectorAll("[data-ic]").forEach(e=>e.innerHTML=ic(e.dataset.ic,+e.dataset.s||20));
-const letter=t=>t.type=="video"?"▶":(t.name[0]||"♪").toUpperCase();
+const NOTE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:46%;height:46%;opacity:.95"><path d="'+P.music[1]+'"/></svg>';
+const letter=t=>t.type=="video"?"▶":NOTE;
 /* thumbnails: convert the stored data URL once into a short blob URL so the page HTML stays small and fast */
 function tu(t){
  if(!t.thumb)return"";
  if(t._tu===undefined){let u="";try{const[h,b]=t.thumb.split(","),m=h.match(/:(.*?);/)[1],bin=atob(b),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);u=URL.createObjectURL(new Blob([a],{type:m}))}catch(e){}Object.defineProperty(t,"_tu",{value:u,writable:true})}
  return t._tu;
 }
-function setTh(el,t){const u=tu(t);el.style.cssText=u?'background-image:url("'+u+'")':bgOf(t.name);el.textContent=u?"":letter(t)}
+function setTh(el,t){const u=tu(t);el.style.cssText=u?'background-image:url("'+u+'")':bgOf(t.name);el.innerHTML=u?"":letter(t)}
 const thumb=(t,c)=>{const u=tu(t);return'<div class="th '+c+'" style="'+(u?'background-image:url(\''+u+'\')':bgOf(t.name))+'">'+(u?"":letter(t))+'</div>'};
 let tt=0;const toast=m=>{const e=$("toast");e.textContent=m;e.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>e.classList.remove("on"),2400)};
 const TT={songs:"Songs",videos:"Videos",fav:"Favorites",pl:"Playlists"},ACC=["#ff6900", "#2f7bff", "#16a34a", "#e11d74", "#8b5cf6", "#e5484d", "#dc143c", "#f43f5e", "#ff4fa3", "#d946ef", "#c026d3", "#7c3aed", "#6d28d9", "#a78bfa", "#4f46e5", "#1e40af", "#1d4ed8", "#0ea5e9", "#38bdf8", "#06b6d4", "#0d9488", "#14b8a6", "#34d399", "#10b981", "#15803d", "#84cc16", "#6b8e23", "#facc15", "#f59e0b", "#d4a017", "#fb923c", "#ff6b6b", "#fa8072", "#ffb38a", "#c2410c", "#92400e", "#b87333", "#64748b", "#4b5563", "#a1a1aa"],VM=["list","grid","compact","big"];
@@ -578,7 +582,7 @@ $("bk").onclick=appBack;
 $("selx").onclick=exitSel;
 $("sela").onclick=()=>{sel=sel.size==viewIds.length?new Set():new Set(viewIds);refresh()};
 $("selm").onclick=selMenu;
-$("addb").onclick=()=>$("fi").click();
+$("addb").onclick=()=>addMenu();
 $("mini").onclick=openFull;$("fcl").onclick=()=>closeTo("full");
 addEventListener("keydown",e=>{if(e.key=="Escape"&&layers.length&&!dlg.open)popL()});
 addEventListener("scroll",()=>$("bar").classList.toggle("sc",scrollY>50));
@@ -590,7 +594,7 @@ let lpT=0,lpF=0;
 $("body").onclick=e=>{
  const a=e.target.closest("[data-a]");
  if(a){const k=a.dataset.a,r=a.closest("[data-id]");
-  if(k=="more")more(r.dataset.id);else if(k=="add")$("fi").click();else if(k=="pall")playAll();
+  if(k=="more")more(r.dataset.id);else if(k=="add")addMenu();else if(k=="pall")playAll();
   else if(k=="shufb"){shuf=1;playAll(1)}
   else if(k=="newpl")askName(p=>{if(tab=="songs")p.kind="audio";else if(tab=="videos")p.kind="video";savePl();openView(p.id);render()});
   else if(k=="plmore")plMenu();
@@ -666,21 +670,49 @@ function meta(f,isV){return new Promise(r=>{
 })}
 let adding=false;
 async function addFiles(files){
- files=[...files].filter(okFile);if(!files.length)return toast("Only mp3, m4a and mp4 files are supported");
+ files=[...files].filter(okFile).sort(nat);if(!files.length)return toast("Only mp3, m4a and mp4 files are supported");
  if(adding)return toast("Please wait, still adding files");
- adding=true;let n=0,full=0;keepStorage();const dbOk=!!(await open);
+ adding=true;let n=0,full=0,dup=0;keepStorage();const dbOk=!!(await open),have=new Set(tracks.concat(trash).map(x=>x.key).filter(Boolean));
  try{
   for(const f of files){
+   const key=f.name+"|"+f.size;if(have.has(key)){dup++;continue}have.add(key);
    toast("Adding "+(n+1)+" of "+files.length+"…");
    const isV=f.type.startsWith("video")||/\.(mp4|mkv|webm)$/i.test(f.name),m=await meta(f,isV),now=Date.now();
-   const t={id:now.toString(36)+Math.random().toString(36).slice(2,6),name:f.name.replace(/\.[^.]+$/,"").replace(/[_]+/g," "),type:isV?"video":"audio",dur:m.dur,thumb:m.thumb,blob:fixBlob(f),fav:false,added:now,ord:now};
+   const t={id:now.toString(36)+Math.random().toString(36).slice(2,6),name:f.name.replace(/\.[^.]+$/,"").replace(/[_]+/g," "),type:isV?"video":"audio",dur:m.dur,thumb:m.thumb,key:key,blob:fixBlob(f),fav:false,added:now,ord:now};
    tracks.push(t);if(dbOk&&await put(t)==null){tracks.pop();full=1;break}n++;
   }
  }finally{adding=false}
  if(tab=="songs"&&!view&&files.every(f=>/\.(mp4|mkv|webm)$/i.test(f.name)))setTab("videos");
- render();toast(full?"Storage is full. Added "+n+" of "+files.length+". Free up space on your device and try again.":n+(n==1?" file added":" files added"));
+ render();toast(full?"Storage is full. Added "+n+" of "+files.length+". Free up space on your device and try again.":n+(n==1?" file added":" files added")+(dup?" ("+dup+" already in Wave)":""));
 }
 $("fi").onchange=e=>{addFiles(e.target.files);e.target.value=""};
+/* ---------- add menu: files, a whole folder, or re-scan a saved folder ---------- */
+const nat=(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"});
+let savedDir=null;kvGet("dir").then(d=>{if(d&&d.kind=="directory")savedDir=d}).catch(()=>{});
+async function walk(d,out){for await(const[n,h]of d.entries()){if(h.kind=="file"){if(okFile({name:n,type:""}))out.push(h)}else await walk(h,out)}}
+async function importDir(d){
+ try{
+  if(d.queryPermission&&(await d.queryPermission({mode:"read"}))!="granted"&&(await d.requestPermission({mode:"read"}))!="granted")return toast("Permission was not given");
+  toast("Reading folder\u2026");const hs=[],fs=[];await walk(d,hs);
+  for(const h of hs){try{fs.push(await h.getFile())}catch(e){}}
+  await addFiles(fs);
+ }catch(e){toast("Could not read that folder")}
+}
+async function pickFolder(){
+ if(window.showDirectoryPicker){
+  try{const d=await showDirectoryPicker({mode:"read"});savedDir=d;kvSet("dir",d);await importDir(d)}catch(e){if(e&&e.name!="AbortError")toast("Could not open that folder")}
+ }else if(matchMedia("(pointer:coarse)").matches){
+  toast("This browser cannot open folders. Choose files, then long-press and Select all.");setTimeout(()=>$("fi").click(),900)
+ }else $("fd").click();
+}
+function addMenu(){
+ sheet('<h4>Add music &amp; videos</h4><div class="row" data-do="aud">Songs (shows your audio files)</div><div class="row" data-do="vid">Videos (gallery view)</div><div class="row" data-do="files">Other files</div><div class="row" data-do="dir">Add a whole folder</div>'+(savedDir?'<div class="row" data-do="sync">Scan saved folder for new files</div>':''),e=>{
+  const r=e.target.closest(".row");if(!r||r.dataset.cx)return;const d=r.dataset.do;closeTo("dlg");
+  if(d=="aud")$("fa").click();else if(d=="vid")$("fv").click();else if(d=="files")$("fi").click();else if(d=="dir")pickFolder();else if(d=="sync")importDir(savedDir);
+ });
+}
+$("fd").onchange=$("fa").onchange=$("fv").onchange=e=>{addFiles(e.target.files);e.target.value=""};
+
 addEventListener("dragover",e=>e.preventDefault());
 addEventListener("drop",e=>{e.preventDefault();addFiles(e.dataTransfer.files)});
 
@@ -815,7 +847,7 @@ function themePage(){
     saveSet();applyTheme();themePage();drawSet()};
 }
 function vizPage(){
-  const z=set.viz||"vinyl";
+  const z=vzCur();
   openPage("Player visualization",'<div class="vgrid">'+VZ.map(x=>'<button class="opt'+(x[0]==z?" on":"")+'" data-z="'+x[0]+'">'+x[1]+'<span class="rd">'+(x[0]==z?ic("check",14):"")+'</span></button>').join("")+'</div>',null);
   $("pgb").onclick=e=>{const a=e.target.closest("[data-z]");if(!a)return;set.viz=a.dataset.z;saveSet();applyViz();vizPage();drawSet()};
 }
@@ -936,7 +968,7 @@ function ui(){
 }
 function artFor(t){
  if(t.thumb)return[{src:t.thumb,sizes:"320x180",type:"image/jpeg"}];
- if(!t._art){const c=document.createElement("canvas");c.width=c.height=512;const x=c.getContext("2d"),h=hue(t.name),g=x.createLinearGradient(0,0,512,512);g.addColorStop(0,"hsl("+(h+20)+",85%,62%)");g.addColorStop(1,"hsl("+(h-10)+",75%,45%)");x.fillStyle=g;x.fillRect(0,0,512,512);x.fillStyle="#fff";x.font="bold 260px sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(letter(t),256,276);Object.defineProperty(t,"_art",{value:c.toDataURL("image/png")})}
+ if(!t._art){const c=document.createElement("canvas");c.width=c.height=512;const x=c.getContext("2d"),h=hue(t.name),g=x.createLinearGradient(0,0,512,512);g.addColorStop(0,"hsl("+(h+20)+",85%,62%)");g.addColorStop(1,"hsl("+(h-10)+",75%,45%)");x.fillStyle=g;x.fillRect(0,0,512,512);x.fillStyle="#fff";{const k=340/WP.w;x.save();x.translate(86,(512-WP.h*k)/2);x.scale(k,k);x.fill(new Path2D(WP.m));x.globalAlpha=.6;x.fill(new Path2D(WP.s));x.restore()}Object.defineProperty(t,"_art",{value:c.toDataURL("image/png")})}
  return[{src:t._art,sizes:"512x512",type:"image/png"}];
 }
 function ms(){
@@ -1009,17 +1041,18 @@ function syncIcons(){
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=0;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=1;location.reload()}});navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{})}}catch(e){}
 
 /* ---------- visualizer ---------- */
-var VZ=[["vinyl","Vinyl"],["art","Artwork"],["bars","Spectrum"],["wave","Waveform"],["radial","Radial"],["orb","Pulse"],["led","Equalizer"],["rings","Rings"],["terrain","Terrain"],["dots","Dot matrix"],["sparks","Sparks"],["loop","Loop"]],CV=["bars","wave","radial","orb","led","rings","terrain","dots","sparks","loop"],pa=[];
+var VZ=[["halo","Halo"],["silk","Silk"],["pillars","Pillars"],["bars","Spectrum"],["orb","Pulse"],["rings","Rings"],["terrain","Terrain"]],CV=VZ.map(z=>z[0]),pa=[];
+function vzCur(){return VZ.some(z=>z[0]==set.viz)?set.viz:VZ[0][0]}
 function rgba(h,a){const n=parseInt(h.slice(1,7),16);return"rgba("+(n>>16)+","+(n>>8&255)+","+(n&255)+","+a+")"}
 var vzc=$("viz"),vx=vzc.getContext("2d"),actx=null,an=null,fd=null,td=null,raf=0,vzFail=0,sm=[],t0=performance.now();
-function vzName(){return(VZ.find(z=>z[0]==(set.viz||"vinyl"))||VZ[0])[1]}
-function applyViz(){const m=set.viz||"vinyl";$("stage").dataset.viz=m;if(CV.includes(m))$("stage").dataset.cv=1;else delete $("stage").dataset.cv;$("fvz").textContent=vzName();vzLoop()}
+function vzName(){return(VZ.find(z=>z[0]==(vzCur()))||VZ[0])[1]}
+function applyViz(){const m=vzCur();$("stage").dataset.viz=m;if(CV.includes(m))$("stage").dataset.cv=1;else delete $("stage").dataset.cv;$("fvz").textContent=vzName();vzLoop()}
 function audioInit(){
  if(an||vzFail)return;if(IOS){vzFail=1;return}
  try{const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();const s=actx.createMediaElementSource(v);an=actx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.8;s.connect(an);an.connect(actx.destination);fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize)}
  catch(e){vzFail=1;an=null}
 }
-function vzOn(){const m=set.viz||"vinyl";return CV.includes(m)&&$("full").classList.contains("open")&&cur&&cur.type!="video"}
+function vzOn(){const m=vzCur();return CV.includes(m)&&$("full").classList.contains("open")&&cur&&cur.type!="video"}
 function vzLoop(){
  cancelAnimationFrame(raf);
  if(!vzOn())return;
@@ -1039,42 +1072,45 @@ function vzFrame(){
  if(vzc.width!=Math.round(W*d)||vzc.height!=Math.round(H*d)){vzc.width=Math.round(W*d);vzc.height=Math.round(H*d)}
  vx.setTransform(d,0,0,d,0,0);vx.clearRect(0,0,W,H);
  vzData();
- const ac=set.acc||"#ff6900",c1=ac,c2=rgba(ac,.5),m=set.viz;
+ const ac=set.acc||"#ff6900",c1=ac,c2=rgba(ac,.5),m=vzCur();
  const g=vx.createLinearGradient(0,0,0,H);g.addColorStop(0,c1);g.addColorStop(1,c2);
  const bin=(i,n,lo)=>{const k=Math.floor(Math.pow(i/n,1.6)*fd.length*.7)+(lo||1);return fd[Math.min(k,fd.length-1)]/255};
- if(m=="bars"){
+ const en=(a,b)=>{let e=0;for(let k=a;k<b;k++)e+=fd[k];return e/(b-a)/255},T=(performance.now()-t0)/1000;
+ if(m=="halo"){
+  const cx=W/2,cy=H/2,base=W*.2;
+  sm[0]=Math.max(en(1,8),(sm[0]||0)*.95);sm[1]=Math.max(en(8,48),(sm[1]||0)*.95);
+  const r=base*(1+sm[0]*.2),gl=vx.createRadialGradient(cx,cy,r*.5,cx,cy,r*2.1);
+  gl.addColorStop(0,rgba(ac,.05+sm[0]*.28));gl.addColorStop(1,rgba(ac,0));
+  vx.fillStyle=gl;vx.beginPath();vx.arc(cx,cy,r*2.1,0,7);vx.fill();
+  vx.strokeStyle=ac;vx.lineWidth=2.5;vx.beginPath();vx.arc(cx,cy,r,0,7);vx.stroke();
+  vx.strokeStyle=rgba(ac,.3+sm[1]*.4);vx.lineWidth=1.2;vx.beginPath();vx.arc(cx,cy,r*(.78+sm[1]*.08),0,7);vx.stroke();
+  vx.fillStyle=rgba(ac,.85);vx.beginPath();vx.arc(cx,cy,3+sm[0]*3,0,7);vx.fill();
+ }else if(m=="silk"){
+  sm[0]=Math.max(en(1,60),(sm[0]||0)*.96);
+  const lg=vx.createLinearGradient(0,0,W,0);lg.addColorStop(0,rgba(ac,0));lg.addColorStop(.18,rgba(ac,1));lg.addColorStop(.82,rgba(ac,1));lg.addColorStop(1,rgba(ac,0));
+  vx.lineCap="round";vx.strokeStyle=lg;
+  [[1,.7,0,2.6,1],[1.6,.55,1.7,1.7,.55],[2.2,.4,3.4,1.1,.3]].forEach((l,i)=>{
+   const amp=H*(.03+sm[0]*.17)*(1-i*.16);vx.beginPath();
+   for(let j=0;j<=100;j++){const u=j/100,y=H/2+Math.sin(u*Math.PI*2*l[0]+T*l[1]+l[2])*amp*Math.sin(u*Math.PI);j?vx.lineTo(u*W,y):vx.moveTo(u*W,y)}
+   vx.lineWidth=l[3];vx.globalAlpha=l[4];vx.stroke()});
+  vx.globalAlpha=1;
+ }else if(m=="pillars"){
+  const bd=[[40,90],[10,28],[1,6],[6,16],[28,60]],w=W*.075,gap=W*.05,x0=W/2-(5*w+4*gap)/2;
+  bd.forEach((b,i)=>{sm[i]=Math.max(en(b[0],b[1]),(sm[i]||0)*.93);
+   const h=w+sm[i]*H*.42,x=x0+i*(w+gap),y=H/2-h/2;
+   vx.fillStyle=rgba(ac,.55+sm[i]*.45);vx.beginPath();vx.roundRect?vx.roundRect(x,y,w,h,w/2):vx.rect(x,y,w,h);vx.fill()});
+ }else if(m=="bars"){
   const N=34,bw=W/N,mid=H/2;vx.fillStyle=g;
   for(let i=0;i<N;i++){const val=bin(i,N);sm[i]=Math.max(val,(sm[i]||0)*.9);const bh=Math.max(5,sm[i]*H*.46),x=i*bw+bw*.15,w=bw*.7;
    vx.beginPath();vx.roundRect?vx.roundRect(x,mid-bh,w,bh*2,w/2):vx.rect(x,mid-bh,w,bh*2);vx.fill()}
- }else if(m=="wave"){
-  const mid=H/2,step=Math.floor(td.length/120);
-  const path=()=>{vx.beginPath();for(let i=0;i<=120;i++){const y=mid+((td[Math.min(i*step,td.length-1)]-128)/128)*H*.42,x=i/120*W;i?vx.lineTo(x,y):vx.moveTo(x,y)}};
-  vx.lineJoin="round";vx.lineCap="round";
-  path();vx.lineWidth=10;vx.strokeStyle=c1;vx.globalAlpha=.18;vx.stroke();
-  path();vx.lineWidth=3.5;vx.globalAlpha=1;vx.strokeStyle=c1;vx.stroke();
-  vx.beginPath();vx.moveTo(0,mid);vx.lineTo(W,mid);vx.lineWidth=1;vx.strokeStyle=c2;vx.globalAlpha=.4;vx.stroke();vx.globalAlpha=1;
- }else if(m=="radial"){
-  const cx=W/2,cy=H/2,r0=W*.25,N=64,rot=(performance.now()-t0)/9000;
-  vx.lineCap="round";vx.lineWidth=W*.012;
-  for(let i=0;i<N;i++){const half=i<N/2?i:N-1-i,val=bin(half,N/2);sm[i]=Math.max(val,(sm[i]||0)*.9);
-   const a=rot+i/N*Math.PI*2,len=4+sm[i]*W*.2;vx.strokeStyle=i%2?c1:c2;
-   vx.beginPath();vx.moveTo(cx+Math.cos(a)*(r0+6),cy+Math.sin(a)*(r0+6));vx.lineTo(cx+Math.cos(a)*(r0+6+len),cy+Math.sin(a)*(r0+6+len));vx.stroke()}
-  const dg=vx.createLinearGradient(cx-r0,cy-r0,cx+r0,cy+r0);dg.addColorStop(0,c1);dg.addColorStop(1,c2);
-  vx.fillStyle=dg;vx.beginPath();vx.arc(cx,cy,r0,0,7);vx.fill();
-  vx.fillStyle="#fff";vx.font="800 "+r0*1.1+"px sans-serif";vx.textAlign="center";vx.textBaseline="middle";vx.fillText(letter(cur),cx,cy+r0*.06);
  }else if(m=="orb"){
   let bass=0,mid=0;for(let i=0;i<8;i++)bass+=fd[i];for(let i=10;i<60;i++)mid+=fd[i];bass=bass/8/255;mid=mid/50/255;
   sm[0]=Math.max(bass,(sm[0]||0)*.92);sm[1]=Math.max(mid,(sm[1]||0)*.9);
   const cx=W/2,cy=H/2,base=W*.2;
-  [[1.9+sm[0]*.9,.16,h+40],[1.35+sm[0]*.6,.3,h+20],[1+sm[1]*.4,.95,h-10]].forEach(([k,al,hh])=>{
+  [[1.9+sm[0]*.9,.16],[1.35+sm[0]*.6,.3],[1+sm[1]*.4,.95]].forEach(([k,al])=>{
    const r=base*k,rg=vx.createRadialGradient(cx,cy,r*.1,cx,cy,r);rg.addColorStop(0,rgba(ac,al));rg.addColorStop(1,rgba(ac,0));
    vx.fillStyle=rg;vx.beginPath();vx.arc(cx,cy,r,0,7);vx.fill()});
   vx.strokeStyle=c1;vx.globalAlpha=.5;vx.lineWidth=2;vx.beginPath();vx.arc(cx,cy,base*(1.15+sm[0]*.5),0,7);vx.stroke();vx.globalAlpha=1;
- }
- else if(m=="led"){
-  const N=14,R=12,cw=W/N,ch=H*.8/R,top=H*.1;
-  for(let i=0;i<N;i++){const val=bin(i,N);sm[i]=Math.max(val,(sm[i]||0)*.9);const lit=Math.round(sm[i]*R);
-   for(let r=0;r<R;r++){const on=r<lit;vx.fillStyle=on?rgba(ac,.45+.55*r/R):rgba(ac,.1);vx.fillRect(i*cw+cw*.12,top+(R-1-r)*ch+ch*.14,cw*.76,ch*.72)}}
  }else if(m=="rings"){
   const cx=W/2,cy=H/2,bands=[[1,6],[6,18],[18,45],[45,100],[100,200]];
   bands.forEach((b,i)=>{let e=0;for(let k=b[0];k<b[1];k++)e+=fd[k];e=e/(b[1]-b[0])/255;sm[i]=Math.max(e,(sm[i]||0)*.9);
@@ -1087,31 +1123,17 @@ function vzFrame(){
    for(let i=0;i<=P;i++){const val=bin(i,P,1+L*3);const k=i+L*100;sm[k]=Math.max(val,(sm[k]||0)*.9);vx.lineTo(i/P*W,H*(.92-L*.07)-sm[k]*H*(.62-L*.12))}
    vx.lineTo(W,H);vx.closePath();vx.fillStyle=rgba(ac,.22+L*.25);vx.fill();
   }
- }else if(m=="dots"){
-  const C=14,R=10,cw=W/C,rh=H*.8/R,top=H*.1;
-  for(let i=0;i<C;i++){const val=bin(i,C);sm[i]=Math.max(val,(sm[i]||0)*.9);const lit=sm[i]*R;
-   for(let r=0;r<R;r++){const on=r<lit;vx.fillStyle=rgba(ac,on?.35+.65*r/R:.12);vx.beginPath();vx.arc(i*cw+cw/2,top+(R-1-r)*rh+rh/2,Math.min(cw,rh)*(on?.34:.14),0,7);vx.fill()}}
- }else if(m=="sparks"){
-  let bass=0;for(let i=0;i<8;i++)bass+=fd[i];bass/=8*255;sm[0]=Math.max(bass,(sm[0]||0)*.9);
-  const cx=W/2,cy=H/2;
-  if(!v.paused&&bass>.45&&pa.length<260)for(let k=0;k<5;k++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*2.8+bass*2;pa.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,l:1,r:1.5+Math.random()*2.5})}
-  for(let i=pa.length-1;i>=0;i--){const p=pa[i];p.x+=p.vx;p.y+=p.vy;p.l-=.014;if(p.l<=0){pa.splice(i,1);continue}vx.fillStyle=rgba(ac,p.l);vx.beginPath();vx.arc(p.x,p.y,p.r*p.l+.5,0,7);vx.fill()}
-  vx.fillStyle=rgba(ac,.9);vx.beginPath();vx.arc(cx,cy,W*.05+sm[0]*W*.08,0,7);vx.fill();
-  vx.strokeStyle=rgba(ac,.35);vx.lineWidth=2;vx.beginPath();vx.arc(cx,cy,W*.09+sm[0]*W*.12,0,7);vx.stroke();
- }else if(m=="loop"){
-  const cx=W/2,cy=H/2,r0=W*.28,N=180;
-  const path=()=>{vx.beginPath();for(let i=0;i<=N;i++){const a=i/N*Math.PI*2,k=td[Math.floor(i/N*(td.length-1))],r=r0+((k-128)/128)*W*.16;const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;i?vx.lineTo(x,y):vx.moveTo(x,y)}vx.closePath()};
-  vx.lineJoin="round";path();vx.lineWidth=10;vx.strokeStyle=rgba(ac,.18);vx.stroke();path();vx.lineWidth=3;vx.strokeStyle=ac;vx.stroke();
+ 
  }
  raf=requestAnimationFrame(vzFrame);
 }
 function vizSheet(){
- sheet('<h4>Visualization</h4><div class="spg" style="grid-template-columns:repeat(3,1fr)">'+VZ.map(z=>'<button class="spc'+(z[0]==(set.viz||"vinyl")?" on":"")+'" data-z="'+z[0]+'">'+z[1]+'</button>').join("")+'</div>',e=>{
+ sheet('<h4>Visualization</h4><div class="spg" style="grid-template-columns:repeat(3,1fr)">'+VZ.map(z=>'<button class="spc'+(z[0]==(vzCur())?" on":"")+'" data-z="'+z[0]+'">'+z[1]+'</button>').join("")+'</div>',e=>{
   const b=e.target.closest("[data-z]");if(!b)return;set.viz=b.dataset.z;saveSet();applyViz();closeTo("dlg");
  });
 }
 $("fvz").onclick=vizSheet;
-$("stage").onclick=e=>{if(cur&&cur.type=="video")return;const i=VZ.findIndex(z=>z[0]==(set.viz||"vinyl"));set.viz=VZ[(i+1)%VZ.length][0];saveSet();applyViz();toast(vzName())};
+$("stage").onclick=e=>{if(cur&&cur.type=="video")return;const i=VZ.findIndex(z=>z[0]==(vzCur()));set.viz=VZ[(i+1)%VZ.length][0];saveSet();applyViz();toast(vzName())};
 $("v").addEventListener("play",()=>{if(actx&&actx.state=="suspended")actx.resume().catch(()=>{});vzLoop()});
 
 /* ---------- resume last track ---------- */
