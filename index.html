@@ -279,12 +279,12 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 .stt div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
 .stt b{display:block;font-size:20px}.stt small{color:var(--sub);font-size:12px}
 #pgp .sph .pb{margin-left:auto}
-#pgp{position:fixed;inset:0;z-index:45;background:var(--bg);color:var(--tx);transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.3,.8,.3,1),visibility 0s .28s;overflow-y:auto;padding:env(safe-area-inset-top,0px) 0 calc(24px + env(safe-area-inset-bottom,0px))}
+#pgp{position:fixed;inset:0;z-index:45;background:var(--bg);color:var(--tx);transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.3,.8,.3,1),visibility 0s .28s;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 0 calc(24px + env(safe-area-inset-bottom,0px))}
 #pgp.open{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.3,.8,.3,1)}
 #pgb{max-width:720px;margin:0 auto}
-#setp{position:fixed;inset:0;z-index:45;background:var(--bg);color:var(--tx);transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.3,.8,.3,1),visibility 0s .28s;overflow-y:auto;padding:env(safe-area-inset-top,0px) 0 calc(24px + env(safe-area-inset-bottom,0px))}
+#setp{position:fixed;inset:0;z-index:45;background:var(--bg);color:var(--tx);transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.3,.8,.3,1),visibility 0s .28s;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 0 calc(24px + env(safe-area-inset-bottom,0px))}
 #setp.open{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.3,.8,.3,1)}
-.sph{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:6px;height:56px;padding:0 14px 0 10px;background:var(--bg)}
+.sph{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:6px;height:calc(56px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 14px 0 10px;background:var(--bg);flex:none}
 .trb{display:flex;gap:10px;padding:4px 16px 10px}.trb .pb{height:38px;padding:0 16px}.trr{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px}.trr .th{width:48px;height:48px;font-size:18px;border-radius:12px}.trr .tx{flex:1;min-width:0;display:flex;flex-direction:column}.trr .tx b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trr .ib.red{color:#e5484d}.sph b{flex:1;font-size:20px;padding-left:4px}
 .pb:disabled{background:var(--line);color:var(--sub);cursor:default}
 #setb{max-width:720px;margin:0 auto;padding:0 4px}
@@ -324,10 +324,14 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 .mp{display:flex;flex-direction:column;justify-content:flex-end;height:96px;padding:12px;border-radius:18px;background:var(--card);border:1px solid var(--line);text-align:left;font-weight:700;font-size:14px;width:100%;min-width:0}
 .mp.on{border-color:var(--ac)}.mp .rd{position:absolute;right:10px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--ac);color:var(--on);display:grid;place-items:center}
 .mp[data-m="none"]{color:var(--sub)}
-:root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="waves"]::before,:root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="waves"]::after{left:0;bottom:0;width:calc(100% + 120px);background:var(--wvc,var(--ac));-webkit-mask:var(--wvm) repeat-x 0 100%/120px 100%;mask:var(--wvm) repeat-x 0 100%/120px 100%;will-change:transform;transition:height .5s ease,opacity .5s ease}
+:root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="waves"]::before,:root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="waves"]::after{left:0;bottom:0;width:calc(100% + 120px);background:var(--wvc,var(--ac));-webkit-mask:var(--wvm) repeat-x 0 100%/120px 100%;mask:var(--wvm) repeat-x 0 100%/120px 100%;transition:opacity .3s ease}
 :root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="waves"]::before{height:62%;opacity:calc(0.26*var(--oa,1));animation:wvA 4.5s linear infinite;animation-delay:var(--wd,0s)}
 :root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="waves"]::after{height:46%;opacity:calc(0.18*var(--oa,1));animation:wvB 7s linear infinite;animation-delay:var(--wd,0s)}
 :root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk):active::before{height:85%;opacity:.34}:root[data-mo="waves"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk):active::after{height:65%;opacity:.24}
+
+/* long, scrollable menus: same look, frozen - zero per-frame work while scrolling */
+dialog :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,dialog :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,#setp :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,#setp :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,#pgp :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,#pgp :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.drw :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.drw :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){:is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,:is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp::before,.mp::after{animation-play-state:paused!important}}
 @keyframes wvA{0%{transform:translate(0,0)}50%{transform:translate(-60px,12%)}100%{transform:translate(-120px,0)}}
 @keyframes wvB{0%{transform:translate(-120px,4%)}50%{transform:translate(-60px,-3%)}100%{transform:translate(0,4%)}}
 :root[data-mo="bubbles"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="bubbles"]::before,:root[data-mo="bubbles"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="bubbles"]::after{inset:0;-webkit-mask:linear-gradient(0deg,#000 10%,transparent 95%);mask:linear-gradient(0deg,#000 10%,transparent 95%)}
@@ -335,8 +339,8 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 :root[data-mo="bubbles"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="bubbles"]::after{background:radial-gradient(circle,var(--wvc,var(--ac)) 0 6px,transparent 7px) 8px 0/92px 110px;opacity:calc(0.22*var(--oa,1));animation:bubB 8.5s linear infinite}
 @keyframes bubA{from{background-position:0 0,17px 20px}to{background-position:0 -46px,17px -54px}}
 @keyframes bubB{from{background-position:8px 0}to{background-position:8px -110px}}
-:root[data-mo="aurora"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="aurora"]::before{inset:-30%;background:radial-gradient(circle at 25% 35%,var(--wvc,var(--ac)),transparent 45%),radial-gradient(circle at 75% 65%,color-mix(in srgb,var(--wvc,var(--ac)) 50%,#a855f7),transparent 45%);filter:blur(10px);opacity:calc(0.36*var(--oa,1));animation:auA 8s ease-in-out infinite alternate}
-:root[data-mo="aurora"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="aurora"]::after{inset:-30%;background:radial-gradient(circle at 60% 25%,color-mix(in srgb,var(--wvc,var(--ac)) 55%,#22d3ee),transparent 40%);filter:blur(12px);opacity:calc(0.28*var(--oa,1));animation:auB 11s ease-in-out infinite alternate}
+:root[data-mo="aurora"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="aurora"]::before{inset:-30%;background:radial-gradient(circle at 25% 35%,var(--wvc,var(--ac)),transparent 45%),radial-gradient(circle at 75% 65%,color-mix(in srgb,var(--wvc,var(--ac)) 50%,#a855f7),transparent 45%);opacity:calc(0.36*var(--oa,1));animation:auA 8s ease-in-out infinite alternate}
+:root[data-mo="aurora"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::after,.mp[data-m="aurora"]::after{inset:-30%;background:radial-gradient(circle at 60% 25%,color-mix(in srgb,var(--wvc,var(--ac)) 55%,#22d3ee),transparent 40%);opacity:calc(0.28*var(--oa,1));animation:auB 11s ease-in-out infinite alternate}
 @keyframes auA{from{transform:translate(-12%,-6%) rotate(0)}to{transform:translate(12%,8%) rotate(25deg)}}
 @keyframes auB{from{transform:translate(10%,8%) scale(1)}to{transform:translate(-10%,-8%) scale(1.25)}}
 :root[data-mo="shimmer"] :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk)::before,.mp[data-m="shimmer"]::before{inset:0;background:linear-gradient(105deg,transparent 30%,color-mix(in srgb,var(--wvc,var(--ac)) 50%,#fff) 50%,transparent 70%);opacity:calc(0.42*var(--oa,1));transform:translateX(-120%);animation:shn 3.4s ease-in-out infinite;animation-delay:var(--wd,0s)}
@@ -486,9 +490,10 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 @media (max-height:420px){#vp.fs .vmid button{width:44px;height:44px}#vp.fs .vmid #vpp{width:58px;height:58px}#vp.fs .vtop{padding-bottom:18px}#vp.fs .vbot{padding-top:18px}}
 
 /* every menu opens as its own full window */
-dialog{position:fixed;inset:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:env(safe-area-inset-top,0px) 0 calc(24px + env(safe-area-inset-bottom,0px));border-radius:0;background:var(--bg);overflow-y:auto}
+dialog{position:fixed;inset:0;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0 0 calc(24px + env(safe-area-inset-bottom,0px));border-radius:0;background:var(--bg);overflow-y:auto;overscroll-behavior:contain}
 dialog[open]{animation:winIn .26s cubic-bezier(.3,.8,.3,1)}
 @keyframes winIn{from{transform:translateX(44px);opacity:0}}
+dialog :focus:not(:focus-visible),.sph :focus:not(:focus-visible){outline:none}
 .wn{max-width:640px;margin:0 auto}
 .wn .sph b{flex:1;min-width:0;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wn .wb{padding:0 8px}
@@ -713,7 +718,7 @@ function lstHtml(){
  let L=base();const all=L.length;
  if(q)L=L.filter(t=>t.name.toLowerCase().includes(q));
  if(set.sort=="manual"){if(!view&&tab!="recent")L=[...L].sort((a,b)=>a.ord-b.ord)}
- else L=[...L].sort(set.sort=="az"?(a,b)=>a.name.localeCompare(b.name):set.sort=="new"?(a,b)=>b.added-a.added:(a,b)=>b.dur-a.dur);
+ else L=[...L].sort(set.sort=="az"?(a,b)=>a.name.localeCompare(b.name):set.sort=="za"?(a,b)=>b.name.localeCompare(a.name):set.sort=="new"?(a,b)=>b.added-a.added:set.sort=="old"?(a,b)=>a.added-b.added:set.sort=="short"?(a,b)=>a.dur-b.dur:(a,b)=>b.dur-a.dur);
  viewIds=L.map(t=>t.id);
  if(!tracks.length)return '<div class="empty"><div class="orb">'+WV(76,"w")+'</div><h3>No music yet</h3><p>Add mp3, m4a or mp4 files from your phone or computer.<br>They stay on your device, so no internet is needed.</p><button class="pb" data-a="add">'+ic("plus",18)+' Add files</button></div>';
  if(!all)return '<div class="empty"><h3>Nothing here yet</h3><p>Use the ⋯ menu on a track to add it to Favorites or a playlist.</p></div>';
@@ -1192,7 +1197,7 @@ function plMenu(){
  });
 }
 function sortSheet(){
- sheet('<h4>Sort by</h4>'+[["manual","Manual (drag to reorder)"],["az","Name A–Z"],["new","Newest first"],["long","Longest first"]].map(([k,n])=>'<div class="row'+(set.sort==k?" go":"")+'" data-s="'+k+'">'+n+'</div>').join(""),e=>{
+ sheet('<h4>Sort by</h4>'+[["manual","Manual (drag to reorder)"],["az","A to Z"],["za","Z to A"],["new","Newest first"],["old","Oldest first"],["long","Longest first"],["short","Shortest first"]].map(([k,n])=>'<div class="row'+(set.sort==k?" go":"")+'" data-s="'+k+'">'+n+'</div>').join(""),e=>{
   const r=e.target.closest("[data-s]");if(!r)return;
   set.sort=r.dataset.s;saveSet();closeTo("dlg");render();
   if(set.sort!="manual")toast("Switch to Manual to drag tracks");
