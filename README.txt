@@ -1,33 +1,25 @@
-MUSIC APP - how to install it on your phone
+WAVE - WEB VERSION
+==================
+Offline music + video player (mp3, m4a, mp4, mkv, webm ...). Works in any modern browser.
 
-1) Upload ALL files in this folder (index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png)
-   to any free HTTPS host:
-   - Netlify: open app.netlify.com/drop and drag the folder in.
-   - or GitHub Pages / Cloudflare Pages.
-2) Open the link in Chrome on your phone, then open the menu (three dots) and tap "Install app"
-   or "Add to Home screen". On iPhone use Safari: Share > Add to Home Screen.
-3) You need internet only the first time. After that the app works offline.
-4) Tap "+" in the app to add your mp3, m4a and mp4 files. They are stored in your phone's browser storage.
+RUN LOCALLY (test)
+  python3 -m http.server 8080      (run inside this folder)
+  open http://localhost:8080
 
-5) The home-screen icon is the orange wave logo. (The browser tab icon follows your accent colour, but the installed app icon is fixed so installing always works.)
+PUT ONLINE (free, pick one)
+  - Netlify: drag this whole folder onto app.netlify.com/drop
+  - Cloudflare Pages / Vercel / GitHub Pages: upload these files as a static site (no build step)
+  IMPORTANT: it must be served over HTTPS (or localhost). Install-to-home-screen,
+  offline mode and the audio engine do not work from file:// or plain http.
 
-6) Storage: Wave sets no limit on how many files you add. The only limit is your phone's free space and what your browser allows.
-   The app asks the browser to protect your library from automatic clean-up. You can see usage in Profile.
+INSTALL AS AN APP
+  Chrome/Edge: install icon in the address bar.  Android: menu > Add to Home screen.
+  iPhone Safari: Share > Add to Home Screen.
 
-7) Trash: deleted songs and videos go to Trash (menu > Trash) and are kept for 30 days. You can restore them or delete them forever there.
+HOW FILES GET IN
+  Unlike the Android APK, a website cannot scan the phone/PC automatically.
+  Use the add buttons in the app (audio / video / folder) to pick files. They are stored
+  in the browser (IndexedDB) so they stay after you close it.
 
-8) Wave animations: buttons and cards have moving waves and a ripple when you tap. Turn them off in Settings > Wave animations.
-
-9) Motion style: Settings > Theme & colour > Motion style. 12 moving styles (Waves, Bubbles, Aurora, Shimmer, Glow pulse, Ripples, Sparkles, Snowfall, Flow, Neon ring, Equalizer, Scanner) or None.
-
-10) If Chrome says "This app cannot be installed": upload the NEW files over the old site, open the link once, wait 5 seconds, close the tab, open the link again, then menu > Install app. If it still fails, Chrome menu > Settings > Site settings > All sites > your site > Clear & reset, then open it again.
-
-11) Backup & restore: Settings > Backup & restore. "Save backup file" makes one .wavebackup file with all your songs, videos, playlists, favorites, trash, settings and profile photo. Keep it somewhere safe (for example Google Drive). "Restore from backup" adds back anything that is missing and never deletes what you already have, so it is safe to use on a new phone or after a reset. Back up before you change hosting links or clear browser data.
-
-12) Player: double-tap the left side of the player to go back 10 seconds and the right side to go forward 10 seconds (keep tapping to keep skipping). On music, tapping the middle changes the visual.
-
-13) Opening screen: every time you open the app, a short animated splash (logo, ripples and the name "WAVE", with the version number at the bottom) shows for about 1.6 seconds, then fades into the app. It shows once per opening, not on every page refresh.
-
-14) Sound & video quality: Settings > Sound & video quality. Sound enhance (equalizer, compressor, safe limiter) runs on every song and video automatically, at your phone native sample rate. "Volume boost" lets you go up to 400% (default 150%). Presets: Studio HD, Deep bass, Clear vocal, Bright, Flat. Videos always play at the file's full resolution (1080p, 4K, 8K) and a quality badge shows in the corner. Video sharpen is optional. Note: processing improves the sound but cannot add detail missing from the original mp3. Not available for sound on iPhone (browser limit).
-
-15) Listening mode: Settings > Sound & video quality > Listening mode. "Original" plays the song normally. "Karaoke" reduces the singer (works best on stereo songs where the voice is in the centre; bass and drums stay). "Vocal focus" makes the singer louder and the music softer. These are approximate, not a perfect vocal/music split. Mono files go quiet in Karaoke. Not available on iPhone.
+UPDATE
+  Replace index.html on your host. Bump V in sw.js (wave-web-v2 ...) if you change other files.
