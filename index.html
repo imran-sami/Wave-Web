@@ -62,6 +62,7 @@ if(++this.cnt>=H){this.cnt=0;this.frame()}
 o[0][i]=this.fo[0][this.fr];if(o[1])o[1][i]=this.fo[1][this.fr];this.fr=(this.fr+1)&M}return true}}
 registerProcessor('wv-sep',S);
 </script>
+<script>try{const V="34";if(localStorage.getItem("wave_ver")!==V){localStorage.removeItem("wave_set");localStorage.removeItem("wave_last");localStorage.setItem("wave_ver",V)}}catch(e){}</script>
 <script>try{const s=JSON.parse(localStorage.getItem("wave_set")||"{}"),r=document.documentElement,t=s.theme||"system";r.dataset.mo=s.mo||"waves";r.dataset.fx=s.fx===0?"off":"on";r.dataset.theme=t=="system"?(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"):t;if(s.acc){r.style.setProperty("--ac",s.acc);const n=parseInt(s.acc.slice(1,7),16),f=c=>{c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4)};r.style.setProperty("--on",.2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)>.4?"#111":"#fff")}}catch(e){document.documentElement.dataset.theme="light"}</script>
 <style>
 #sov{position:fixed;inset:0;z-index:70;background:var(--bg);color:var(--tx);display:none;flex-direction:column}
@@ -831,7 +832,7 @@ body:has(#full.open) #toast,body:has(#vp.open) #toast{bottom:calc(16px + var(--s
 </style>
 </head>
 <body>
-<div id="spl"><svg class="wv" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true"><path fill="#ff6900" fill-opacity=".16" d="M0,110 Q180,50 360,110 T720,110 T1080,110 T1440,110 V200 H0Z"/></svg><svg class="wv" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true"><path fill="#ff6900" fill-opacity=".10" d="M0,110 Q180,50 360,110 T720,110 T1080,110 T1440,110 V200 H0Z"/></svg><div class="lg"><i></i><i></i><div class="lgm"></div></div><b>WAVE</b><small>Audio and Video Player</small><em>Where <strong>Rhythm</strong> Meets <strong>Motion</strong><s>v33</s></em></div>
+<div id="spl"><svg class="wv" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true"><path fill="#ff6900" fill-opacity=".16" d="M0,110 Q180,50 360,110 T720,110 T1080,110 T1440,110 V200 H0Z"/></svg><svg class="wv" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true"><path fill="#ff6900" fill-opacity=".10" d="M0,110 Q180,50 360,110 T720,110 T1080,110 T1440,110 V200 H0Z"/></svg><div class="lg"><i></i><i></i><div class="lgm"></div></div><b>WAVE</b><small>Audio and Video Player</small><em>Where <strong>Rhythm</strong> Meets <strong>Motion</strong><s>v34</s></em></div>
 <script>(function(){var d=document.getElementById("spl"),seen=false;try{seen=sessionStorage.getItem("wave_spl")=="1";sessionStorage.setItem("wave_spl","1")}catch(e){}
 if(seen){d.remove();return}
 var t0=0,loaded=document.readyState=="complete",gone=false,hide=function(){if(gone)return;gone=true;d.classList.add("out");setTimeout(function(){d.remove()},700)},chk=function(){if(!t0||!loaded)return;setTimeout(hide,Math.max(0,1600-(Date.now()-t0)))};
@@ -854,7 +855,7 @@ setTimeout(hide,6000)})();</script>
  <button class="ib" id="mx" data-ic="close" data-s="22" aria-label="Remove from player"></button></div>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drw" id="drw"><div class="dh"><div class="logo"></div><div class="tx2"><b>Wave</b><small>Offline player · v33</small></div><button class="ib" id="dcl" data-ic="close" data-s="22" aria-label="Close menu"></button></div>
+<aside class="drw" id="drw"><div class="dh"><div class="logo"></div><div class="tx2"><b>Wave</b><small>Offline player · v34</small></div><button class="ib" id="dcl" data-ic="close" data-s="22" aria-label="Close menu"></button></div>
  <button class="it" id="dprof"><i data-ic="user" data-s="24"></i>Profile</button>
  <button class="it" id="dtr"><i data-ic="trash" data-s="24"></i>Trash<span class="n" id="trn"></span></button>
  <button class="it" id="dset"><i data-ic="gear" data-s="24"></i>Settings</button>
@@ -1989,7 +1990,7 @@ var SPD={normal:["Normal",1],slow:["Slowed",.85],fast:["Sped up",1.15],fast2:["N
 function spdApply(){const r=rate,sp0=set.spd||{},pr=sp0.pre,kp=(sp0.ps&&(pr=="slow"||pr=="fast"||pr=="fast2"))?KPO():true;try{v.defaultPlaybackRate=r;v.playbackRate=r;v.preservesPitch=kp;v.mozPreservesPitch=kp;v.webkitPreservesPitch=kp}catch(e){}}
 try{if(set.spd&&+set.spd.rate>0)rate=+set.spd.rate}catch(e){}
 function spdSet(r,pst){rate=r;let p="custom";if(pst)for(const k in SPD)if(SPD[k][1]==r)p=k;set.spd=Object.assign({},set.spd,{pre:p,rate:r,ps:pst?1:0});saveSet();spdApply();try{$("fsp").textContent=rate+"x";vpUI()}catch(e){}}
-v.addEventListener("loadstart",()=>spdApply());v.addEventListener("loadedmetadata",()=>spdApply());v.addEventListener("play",()=>spdApply());
+v.addEventListener("ratechange",()=>{try{if(Math.abs(v.playbackRate-rate)>.001&&!v.__hold)v.playbackRate=rate}catch(e){}});v.addEventListener("loadstart",()=>spdApply());v.addEventListener("loadedmetadata",()=>spdApply());v.addEventListener("play",()=>spdApply());
 function sndApply(){spdApply();
  if(!sndN)return;const c=sndCfg(),T=sndN.ctx.currentTime;
  const on=c.on;sndWire(c.mode);
@@ -2514,7 +2515,7 @@ vpl.oncontextmenu=e=>e.preventDefault();
   if(z&&multi&&z==ls&&now-lt<800){lt=now;jump(z,0,x,y);return}
   if(z==ls&&now-lt<300){clearTimeout(tapT);lt=now;if(z){multi=1;jump(z,1,x,y)}else{toggle();vpShow(1)}return}
   lt=now;ls=z;multi=0;clearTimeout(tapT);tapT=setTimeout(()=>{if(VPS.lock)vulShow();else vpShow(-1)},260)}
- const endHold=()=>{if(hold){hold=0;v.playbackRate=rate;vhudOff(200)}};
+ const endHold=()=>{v.__hold=0;if(hold){hold=0;v.playbackRate=rate;vhudOff(200)}};
  vpl.addEventListener("pointerdown",e=>{
   if(e.target.closest("button,.vsb,.vrs"))return;
   if(VPS.lock){vulShow();return}
@@ -2522,7 +2523,7 @@ vpl.oncontextmenu=e=>e.preventDefault();
   if(ptr.size==2){clearTimeout(lpT);endHold();const a=[...ptr.values()];g={m:"pinch",d0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z0:VPS.z};return}
   if(ptr.size>2)return;
   g={m:"",x0:l.x,y0:l.y,side:zone(l.x),moved:0,st:v.currentTime,br0:VPS.br,vo0:v.volume,px0:VPS.px,py0:VPS.py};
-  clearTimeout(lpT);lpT=setTimeout(()=>{if(g&&!g.moved&&!g.m&&!v.paused&&!VPS.lock){hold=1;v.playbackRate=2;vhud('<b class="vbig">2x</b><span>Fast playback</span>')}},450);
+  clearTimeout(lpT);lpT=setTimeout(()=>{if(g&&!g.moved&&!g.m&&!v.paused&&!VPS.lock){hold=1;v.__hold=1;v.playbackRate=2;vhud('<b class="vbig">2x</b><span>Fast playback</span>')}},450);
  });
  vpl.addEventListener("pointermove",e=>{
   if(!g||!ptr.has(e.pointerId))return;const l=loc(e);ptr.set(e.pointerId,l);
