@@ -64,6 +64,15 @@ registerProcessor('wv-sep',S);
 </script>
 <script>try{const s=JSON.parse(localStorage.getItem("wave_set")||"{}"),r=document.documentElement,t=s.theme||"system";r.dataset.mo=s.mo||"waves";r.dataset.fx=s.fx===0?"off":"on";r.dataset.theme=t=="system"?(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"):t;if(s.acc){r.style.setProperty("--ac",s.acc);const n=parseInt(s.acc.slice(1,7),16),f=c=>{c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4)};r.style.setProperty("--on",.2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)>.4?"#111":"#fff")}}catch(e){document.documentElement.dataset.theme="light"}</script>
 <style>
+#sov{position:fixed;inset:0;z-index:70;background:var(--bg);color:var(--tx);display:none;flex-direction:column}
+#sov.open{display:flex}
+html.sov-open #mini{z-index:71}
+#sov .sh{display:flex;align-items:center;gap:6px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line)}
+#sov .sh .sb{flex:1;margin:0}
+#sov .sl{flex:1;overflow-y:auto;padding-bottom:110px;-webkit-overflow-scrolling:touch}
+#sov .empty{padding:60px 20px;text-align:center;color:var(--sub)}
+</style>
+<style>
 #spl{position:fixed;inset:0;z-index:99999;background:#160C07;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#fff;transition:opacity .5s ease,transform .5s ease,visibility 0s .5s;overflow:hidden}
 #spl::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(75% 42% at 50% 38%,rgba(255,105,0,.30),transparent 70%),radial-gradient(100% 38% at 50% 108%,rgba(255,153,60,.22),transparent 70%);animation:splGlow 1.4s ease .05s backwards}
 #spl .wv{position:absolute;left:0;bottom:0;width:200%;height:26%;z-index:-1;animation:splDrift 9s linear infinite;opacity:.9}
@@ -1053,7 +1062,7 @@ function base(){
 }
 function lstHtml(){
  let L=base();const all=L.length;
- if(q)L=L.filter(t=>t.name.toLowerCase().includes(q));
+ if(q){const nz=x=>String(x||"").normalize("NFC").toLowerCase(),ws=nz(q).split(/\s+/).filter(Boolean);L=L.filter(t=>{const h=nz(t.name);return ws.every(w=>h.includes(w))})}
  if(set.sort=="manual"){if(!view&&tab!="recent")L=[...L].sort((a,b)=>a.ord-b.ord)}
  else L=[...L].sort(set.sort=="az"?(a,b)=>a.name.localeCompare(b.name):set.sort=="za"?(a,b)=>b.name.localeCompare(a.name):set.sort=="new"?(a,b)=>b.added-a.added:set.sort=="old"?(a,b)=>a.added-b.added:set.sort=="short"?(a,b)=>a.dur-b.dur:(a,b)=>b.dur-a.dur);
  viewIds=L.map(t=>t.id);
@@ -1156,6 +1165,32 @@ addEventListener("keydown",e=>{if(e.key=="Escape"&&layers.length&&!dlg.open)popL
 addEventListener("scroll",()=>$("bar").classList.toggle("sc",scrollY>50));
 $("body").oninput=e=>{if(e.target.id=="q"){q=e.target.value.trim().toLowerCase();refresh()}};
 $("body").addEventListener("contextmenu",e=>e.preventDefault());
+/* ---------- full-screen search: tap the search bar, type, tap a result to play, Back closes ---------- */
+const sov=document.createElement("div");sov.id="sov";
+sov.innerHTML='<div class="sh"><button class="ib" id="sbk" aria-label="Back">'+ic("back",24)+'</button><div class="sb">'+ic("search",18)+'<input id="sq" placeholder="Search" autocomplete="off" enterkeyhint="search"></div></div><div class="sl" id="slst"></div>';
+document.body.appendChild(sov);
+function searchFill(){
+ const nz=x=>String(x||"").normalize("NFC").toLowerCase(),ws=nz($("sq").value.trim()).split(/\s+/).filter(Boolean);
+ const L=ws.length?tracks.filter(t=>{const h=nz(t.name);return ws.every(w=>h.includes(w))}):[];
+ viewIds=L.map(t=>t.id);
+ $("slst").innerHTML=!ws.length?"":L.length?L.map(t=>row(t,0)).join(""):'<div class="empty"><h3>No file found</h3></div>';
+}
+function openSearch(){
+ if(sov.classList.contains("open"))return;
+ sov.classList.add("open");document.documentElement.classList.add("sov-open");$("sq").value="";$("slst").innerHTML="";
+ pushL("search",()=>{sov.classList.remove("open");document.documentElement.classList.remove("sov-open");$("sq").blur();q="";try{refresh()}catch(e){}});
+ setTimeout(()=>$("sq").focus(),50);
+}
+$("sq").oninput=searchFill;
+$("sq").onkeydown=e=>{if(e.key=="Enter")$("sq").blur()};
+$("sbk").onclick=()=>{if(hasL("search"))popL();else{sov.classList.remove("open");document.documentElement.classList.remove("sov-open")}};
+$("slst").onclick=e=>{
+ const m=e.target.closest('[data-a="more"]'),r=e.target.closest(".rw");if(!r)return;
+ if(m){more(r.dataset.id);return}
+ $("sq").blur();play(r.dataset.id,viewIds);setTimeout(searchFill,300);
+};
+document.addEventListener("focusin",e=>{if(e.target&&e.target.id=="q"){e.target.blur();openSearch()}});
+
 
 function playAll(rand){if(!viewIds.length)return;play(rand?viewIds[Math.floor(Math.random()*viewIds.length)]:viewIds[0],viewIds)}
 let lpT=0,lpF=0;
