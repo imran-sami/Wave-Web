@@ -1172,9 +1172,9 @@ sov.innerHTML='<div class="sh"><button class="ib" id="sbk" aria-label="Back">'+i
 document.body.appendChild(sov);
 function searchFill(){
  const nz=x=>String(x||"").normalize("NFC").toLowerCase(),ws=nz($("sq").value.trim()).split(/\s+/).filter(Boolean);
- const L=ws.length?tracks.filter(t=>{const h=nz(t.name);return ws.every(w=>h.includes(w))}):[];
+ const src=(!view&&tab=="videos")?tracks.filter(t=>t.type=="video"):(!view&&tab=="songs")?tracks.filter(t=>t.type=="audio"):base();const L=ws.length?src.filter(t=>{const h=nz(t.name);return ws.every(w=>h.includes(w))}):[];
  viewIds=L.map(t=>t.id);
- $("slst").innerHTML=!ws.length?"":L.length?L.map(t=>row(t,0)).join(""):'<div class="empty"><h3>No file found</h3></div>';
+ $("slst").innerHTML=!ws.length?"":L.length?L.map(t=>row(t,0)).join(""):'<div class="empty"><h3>'+((!view&&tab=="videos")?"No video found":(!view&&tab=="songs")?"No audio found":"No file found")+'</h3></div>';
 }
 function openSearch(){
  if(sov.classList.contains("open"))return;
