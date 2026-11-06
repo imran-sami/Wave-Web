@@ -1986,9 +1986,9 @@ function sndWire(md){
 }
 function KPO(){return !!(set.spd||{}).kp}
 var SPD={normal:["Normal",1],slow:["Slowed",.85],fast:["Sped up",1.15],fast2:["Nightcore",1.3]};
-function spdApply(){const r=rate,pr=(set.spd||{}).pre,kp=(pr=="slow"||pr=="fast"||pr=="fast2")?KPO():true;try{v.defaultPlaybackRate=r;v.playbackRate=r;v.preservesPitch=kp;v.mozPreservesPitch=kp;v.webkitPreservesPitch=kp}catch(e){}}
+function spdApply(){const r=rate,sp0=set.spd||{},pr=sp0.pre,kp=(sp0.ps&&(pr=="slow"||pr=="fast"||pr=="fast2"))?KPO():true;try{v.defaultPlaybackRate=r;v.playbackRate=r;v.preservesPitch=kp;v.mozPreservesPitch=kp;v.webkitPreservesPitch=kp}catch(e){}}
 try{if(set.spd&&+set.spd.rate>0)rate=+set.spd.rate}catch(e){}
-function spdSet(r,pst){rate=r;let p="custom";if(pst)for(const k in SPD)if(SPD[k][1]==r)p=k;set.spd=Object.assign({},set.spd,{pre:p,rate:r});saveSet();spdApply();try{$("fsp").textContent=rate+"x";vpUI()}catch(e){}}
+function spdSet(r,pst){rate=r;let p="custom";if(pst)for(const k in SPD)if(SPD[k][1]==r)p=k;set.spd=Object.assign({},set.spd,{pre:p,rate:r,ps:pst?1:0});saveSet();spdApply();try{$("fsp").textContent=rate+"x";vpUI()}catch(e){}}
 v.addEventListener("loadstart",()=>spdApply());v.addEventListener("loadedmetadata",()=>spdApply());v.addEventListener("play",()=>spdApply());
 function sndApply(){spdApply();
  if(!sndN)return;const c=sndCfg(),T=sndN.ctx.currentTime;
