@@ -73,11 +73,13 @@ html.sov-open #mini{visibility:hidden}
 #sov .sl{flex:1;overflow-y:auto;padding-bottom:110px;-webkit-overflow-scrolling:touch}
 #sov .empty{padding:60px 20px;text-align:center;color:var(--sub)}
 .opt{min-width:0;max-width:100%;box-sizing:border-box}
-.opt .on1{flex:1 1 0;min-width:0;overflow-wrap:anywhere}
-.opt small{flex:1 1 0;min-width:0;overflow-wrap:anywhere}
+.opt .on1{flex:1 1 auto;min-width:0;overflow-wrap:break-word;word-break:normal;hyphens:none}
+.opt small{min-width:0;overflow-wrap:break-word;word-break:normal;line-height:1.3}
 .opt .rd{flex:0 0 22px;margin-left:auto;position:relative;z-index:2}
-.vgrid .opt{padding:14px 12px;gap:8px;align-items:center}
-.vgrid .opt .on1{flex:0 1 auto;max-width:46%}
+.vgrid .opt{flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:14px 44px 14px 14px;min-height:76px}
+.vgrid .opt .on1{flex:none;max-width:100%;line-height:1.25}
+.vgrid .opt small{display:block;margin:0!important;width:100%;text-align:left}
+.vgrid .opt .rd{position:absolute;top:12px;right:12px;margin:0}
 .vgrid{align-items:stretch}
 :is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk,.rw,.spc,dialog .row),.mp{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;-webkit-mask-image:-webkit-radial-gradient(#fff,#000)}
 :is(.opt,.ab,.tile,.srow,.pc,.chip)>*{position:relative;z-index:1}
@@ -162,7 +164,7 @@ body.hasmini .app{padding-bottom:calc(130px + var(--nbi,0px))}
 .fl{flex:1}
 .ib{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;flex:none;position:relative}
 .ib.on{color:var(--ac)}
-.big{font-size:36px;font-weight:700;padding:6px 20px 12px;letter-spacing:-.5px;overflow-wrap:anywhere}
+.big{font-size:36px;font-weight:700;padding:6px 20px 12px;letter-spacing:-.5px;overflow-wrap:break-word}
 .big small{font-size:15px;color:var(--sub);font-weight:400;margin-left:8px}
 .sb{margin:0 16px 10px;height:44px;border-radius:22px;background:var(--card);display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--sub);border:1px solid var(--line)}
 .sb input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:16px;color:var(--tx)}
@@ -535,7 +537,7 @@ dialog input[type=text]{width:calc(100% - 24px);margin:6px 12px 10px;padding:13p
 .vpi{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 0 calc(24px + var(--sab,env(safe-area-inset-bottom,0px)))}
 #vp.fs .vpi{display:none}
 .vi1{padding:0 18px}
-.vi1 h2{margin:0;font-size:20px;line-height:1.3;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.vi1 h2{margin:0;font-size:20px;line-height:1.3;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:break-word}
 .vi1 p{margin:4px 0 0;color:var(--sub);font-size:13.5px}
 .vact{display:flex;gap:8px;overflow-x:auto;padding:14px 18px 6px;scrollbar-width:none}
 .vact::-webkit-scrollbar{display:none}
@@ -572,7 +574,7 @@ dialog .row.ic{display:flex;align-items:center;gap:16px}
 dialog .row.ic i{display:grid;place-items:center;width:26px;color:var(--sub);flex:none}
 dialog .row.ic.red i{color:#e5484d}
 .fmh{display:flex;align-items:center;gap:14px;padding:6px 14px 14px;margin-bottom:6px;border-bottom:1px solid var(--line)}
-.fmh .th{flex:none}.fmh .tx{flex:1;min-width:0}.fmh .tx b{white-space:normal;overflow-wrap:anywhere;font-size:17px}
+.fmh .th{flex:none}.fmh .tx{flex:1;min-width:0}.fmh .tx b{white-space:normal;overflow-wrap:break-word;font-size:17px}
 .sbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;gap:4px;padding:8px 8px calc(8px + var(--sab,env(safe-area-inset-bottom,0px)));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 24px var(--sh)}
 .sbar button{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:0;border-radius:14px;background:none;color:var(--tx);font:inherit;font-size:12px;cursor:pointer}
 .sbar button:disabled{opacity:.35}.sbar button.red{color:#e5484d}
@@ -838,6 +840,23 @@ body:has(#full.open) #toast,body:has(#vp.open) #toast{bottom:calc(16px + var(--s
 #mini{position:fixed!important;top:auto!important;left:0!important;right:0!important;max-width:none!important;border-radius:22px 22px 0 0!important;border-left:0!important;border-right:0!important;border-bottom:0!important;bottom:calc(var(--sab,env(safe-area-inset-bottom,0px)) + var(--nbi,0px))!important;transform:translate3d(0,0,0);will-change:transform;backface-visibility:hidden;contain:layout paint}
 .app{padding-bottom:calc(24px + var(--sab,env(safe-area-inset-bottom,0px)) + var(--nbi,0px))}
 .hasmini .app{padding-bottom:calc(140px + var(--sab,env(safe-area-inset-bottom,0px)) + var(--nbi,0px))}
+
+/* text-wrap safety, app-wide */
+button,b,small,span,h1,h2,h3,h4,p,label,.tx,.sx{overflow-wrap:break-word;word-break:normal;hyphens:none;-webkit-hyphens:none}
+.tx,.sx,.tile>*,.tile.wide span:last-child,.srow .sx,.rw .tx,.drw .it>span,.stt div,.pc>*{min-width:0}
+.opt{text-align:left;line-height:1.25}
+.opt>.sw,.opt>svg,.opt>i{flex:none}
+.vgrid>.opt[data-a]{grid-column:1/-1;flex-direction:row;align-items:center;gap:12px;padding:14px 16px;min-height:0}
+.vgrid>.opt[data-a] .rd{position:relative;top:auto;right:auto;margin-left:auto;flex:none}
+.vgrid>.opt[data-rs]{grid-column:1/-1;min-height:0;padding:14px 16px;flex-direction:row;align-items:center}
+.tgrid .opt,.agrid .ab{min-width:0}
+.tile b,.srow b,.stt b{line-height:1.25}
+.tile small,.srow small,.stt small,.pc small{line-height:1.3}
+
+.vgrid .opt.opt{padding:14px 46px 14px 14px}
+.vgrid>.opt.opt[data-a],.vgrid>.opt.opt[data-rs]{padding:14px 16px}
+.vgrid .opt .rd{top:14px;right:12px}
+.vgrid>.opt[data-a] .rd{top:auto;right:auto}
 </style>
 </head>
 <body>
