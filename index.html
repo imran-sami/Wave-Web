@@ -72,6 +72,15 @@ html.sov-open #mini{visibility:hidden}
 #sov .sh .sb{flex:1;margin:0}
 #sov .sl{flex:1;overflow-y:auto;padding-bottom:110px;-webkit-overflow-scrolling:touch}
 #sov .empty{padding:60px 20px;text-align:center;color:var(--sub)}
+.opt{min-width:0;max-width:100%;box-sizing:border-box}
+.opt .on1{flex:1 1 0;min-width:0;overflow-wrap:anywhere}
+.opt small{flex:1 1 0;min-width:0;overflow-wrap:anywhere}
+.opt .rd{flex:0 0 22px;margin-left:auto;position:relative;z-index:2}
+.vgrid .opt{padding:14px 12px;gap:8px;align-items:center}
+.vgrid .opt .on1{flex:0 1 auto;max-width:46%}
+.vgrid{align-items:stretch}
+:is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk,.rw,.spc,dialog .row),.mp{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;-webkit-mask-image:-webkit-radial-gradient(#fff,#000)}
+:is(.opt,.ab,.tile,.srow,.pc,.chip)>*{position:relative;z-index:1}
 </style>
 <style>
 #spl{position:fixed;inset:0;z-index:99999;background:#160C07;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#fff;transition:opacity .5s ease,transform .5s ease,visibility 0s .5s;overflow:hidden}
@@ -1965,8 +1974,8 @@ function sndPage(){
  const sl=(k,t,min,max,val,u)=>'<div style="padding:10px 20px"><div style="display:flex;justify-content:space-between;font-weight:600"><span>'+t+'</span><span id="o_'+k+'">'+val+u+'</span></div><input type="range" data-k="'+k+'" min="'+min+'" max="'+max+'" value="'+val+'" style="--p:'+Math.round((val-min)/(max-min)*100)+'%"></div>';
  const html='<div class="aip" style="padding-top:2px"><span>Sound is processed at your phone native sample rate with equalizer, compressor and a safe limiter. This improves how it sounds, but cannot add detail that is missing from the original file.</span></div>'
  +'<div class="vgrid"><button class="opt'+(c.on?" on":"")+'" data-a="on">Sound enhance<span class="rd">'+(c.on?ic("check",14):"")+'</span></button></div>'
- +'<h4 class="sech">Speed preset</h4><div class="vgrid">'+Object.keys(SPD).map(k=>{const on=((set.spd||{}).pre||"normal")==k&&Math.abs(rate-SPD[k][1])<.001;return'<button class="opt'+(on?" on":"")+'" data-sp="'+k+'">'+SPD[k][0]+'<small style="display:block;font-weight:400;color:var(--sub);font-size:12px;margin-top:2px">'+SPD[k][1]+'x speed'+(FXP[k]?' · reverb '+FXP[k].wet+'%':'')+'</small><span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
- +'<h4 class="sech">Sound preset</h4><div class="vgrid">'+Object.keys(SND_PRE).map(k=>{const on=((set.snd||{}).pre||"flat")==k;return'<button class="opt'+(on?" on":"")+'" data-p="'+k+'">'+SND_PRE[k].n+'<small style="display:block;font-weight:400;color:var(--sub);font-size:12px;margin-top:2px">Bass '+SND_PRE[k].b+' · Mid '+SND_PRE[k].m+' · Treble '+SND_PRE[k].t+' dB</small><span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
+ +'<h4 class="sech">Speed preset</h4><div class="vgrid">'+Object.keys(SPD).map(k=>{const on=((set.spd||{}).pre||"normal")==k&&Math.abs(rate-SPD[k][1])<.001;return'<button class="opt'+(on?" on":"")+'" data-sp="'+k+'">'+'<span class="on1">'+SPD[k][0]+'</span><small style="display:block;font-weight:400;color:var(--sub);font-size:12px;margin-top:2px">'+SPD[k][1]+'x speed'+(FXP[k]?' · reverb '+FXP[k].wet+'%':'')+'</small><span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
+ +'<h4 class="sech">Sound preset</h4><div class="vgrid">'+Object.keys(SND_PRE).map(k=>{const on=((set.snd||{}).pre||"flat")==k;return'<button class="opt'+(on?" on":"")+'" data-p="'+k+'">'+'<span class="on1">'+SND_PRE[k].n+'</span><small style="display:block;font-weight:400;color:var(--sub);font-size:12px;margin-top:2px">Bass '+SND_PRE[k].b+' · Mid '+SND_PRE[k].m+' · Treble '+SND_PRE[k].t+' dB</small><span class="rd">'+(on?ic("check",14):"")+'</span></button>'}).join("")+'</div>'
  +'<h4 class="sech">Sound boost</h4>'+sl("boost","Volume boost",100,1000,c.boost,"%")+'<h4 class="sech">Volume limit</h4>'+sl("lim","Maximum volume",10,100,c.lim,"%")
  +'<h4 class="sech">Reset</h4><div class="vgrid"><button class="opt" data-rs="spd">Reset speed ('+rate+'x)</button><button class="opt" data-rs="all">Reset all sound</button></div>'
  +'<div class="aip"><span>Volume boost goes up to 1000% and is protected by a compressor, soft clipper and limiter. If the Audio sounds harsh, lower the boost.'+(IOS?' On iPhone the browser does not allow sound processing, so only video sharpen works there.':'')+'</span></div>';
