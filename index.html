@@ -110,7 +110,7 @@ html.sov-open #mini{visibility:hidden}
 html,body{-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:auto}
 .rows{-webkit-overflow-scrolling:touch}
-.rw{contain:layout style;touch-action:pan-y;transform:translateZ(0);backface-visibility:hidden}
+.rw{contain:layout style;touch-action:pan-y}
 html.scrolling .rw::before,html.scrolling .rw::after,html.scrolling #mini::before,html.scrolling #mini::after,html.scrolling .eq b,html.scrolling .rw *{animation-play-state:paused!important}
 html.scrolling .rw{transition:none!important}
 </style>
@@ -175,7 +175,6 @@ body.hasmini .app{padding-bottom:calc(130px + var(--nbi,0px))}
 .pb.o{background:transparent;color:var(--ac);box-shadow:inset 0 0 0 1.5px var(--ac)}
 .rw{display:flex;align-items:center;gap:14px;padding:13px 6px 13px 18px;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 
-.v-list .rw{content-visibility:auto;contain-intrinsic-size:auto 92px}
 .rw.sel{background:var(--act)}
 .th{border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:20px;flex:none;background-size:cover;background-position:center;overflow:hidden}
 .th.sq{width:54px;height:54px}.th.wd{width:100px;height:56px;border-radius:10px}
