@@ -2037,7 +2037,7 @@ var SPD={normal:["Normal",1],slow:["Slowed + Reverb",.9],deep:["Deep Slowed + Re
 var FXP={slow:{wet:30,room:75,dec:3.5,pre:35,wd:110,echo:8},deep:{wet:38,room:85,dec:4.5,pre:45,wd:110,echo:12},fast:{wet:5,room:30,dec:.8,pre:10,wd:105,echo:2},fast2:{wet:5,room:30,dec:.8,pre:10,wd:105,echo:2}};
 const FX0={wet:0,room:50,dec:1,pre:0,wd:100,echo:0};
 function fxCfg(){const sp=set.spd||{},k=sp.pre;return(sp.ps&&FXP[k]&&Math.abs(rate-SPD[k][1])<.001)?FXP[k]:FX0}
-function fxIR(c,room,dec){const sr=c.sampleRate,n=Math.max(1,Math.floor(sr*dec)),b=c.createBuffer(2,n,sr),pw=1.5+(1-room/100)*2.5,lpA=.25+.7*(1-room/100);
+function fxIR(c,room,dec){const sr=c.sampleRate,n=Math.max(1,Math.floor(sr*Math.min(dec,2.5))),b=c.createBuffer(2,n,sr),pw=1.5+(1-room/100)*2.5,lpA=.25+.7*(1-room/100);
  for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let lp=0;for(let i=0;i<n;i++){const t=i/n;lp+=lpA*((Math.random()*2-1)-lp);d[i]=lp*Math.pow(1-t,pw)*Math.min(1,i/(sr*.004))}}return b}
 function fxApply(){const N=sndN;if(!N||!N.fx)return;const f=fxCfg(),T=N.ctx.currentTime,F=N.fx,w=f.wd/100;
  F.dry.gain.setTargetAtTime(1,T,.05);F.wet.gain.setTargetAtTime(f.wet/100*1.6,T,.05);F.ech.gain.setTargetAtTime(f.echo/100*1.6,T,.05);
@@ -2071,8 +2071,8 @@ function audioInit(){
   const s=actx.createMediaElementSource(v),f=(type,fr,q)=>{const n=actx.createBiquadFilter();n.type=type;n.frequency.value=fr;if(q)n.Q.value=q;return n};
   const lo=f("lowshelf",110),mid=f("peaking",2800,.9),hi=f("highshelf",9000);
   const cmp=actx.createDynamicsCompressor();cmp.knee.value=18;cmp.attack.value=.01;cmp.release.value=.25;
-  const gain=actx.createGain(),pre=actx.createGain(),shp=actx.createWaveShaper(),cv=new Float32Array(8193),cl=new Float32Array(8193);pre.gain.value=.25;for(let i=0;i<8193;i++){const z=Math.abs((i/4096-1)*4),y=z<=.6?z:.6+.4*Math.tanh((z-.6)/.4),sg=i<4096?-1:1;cv[i]=sg*y;cl[i]=(i/4096-1)*4>1?1:(i/4096-1)*4<-1?-1:(i/4096-1)*4}shp.curve=cl;shp.oversample='4x';const lim=actx.createDynamicsCompressor();lim.knee.value=0;lim.attack.value=.002;lim.release.value=.1;
-  an=actx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.8;
+  const gain=actx.createGain(),pre=actx.createGain(),shp=actx.createWaveShaper(),cv=new Float32Array(8193),cl=new Float32Array(8193);pre.gain.value=.25;for(let i=0;i<8193;i++){const z=Math.abs((i/4096-1)*4),y=z<=.8?z:.8+.18*Math.tanh((z-.8)/.18),sg=i<4096?-1:1;cv[i]=sg*y;cl[i]=cv[i]}shp.curve=cl;shp.oversample='2x';const lim=actx.createDynamicsCompressor();lim.knee.value=0;lim.attack.value=.002;lim.release.value=.1;
+  actx.onstatechange=()=>{if(actx.state!="running"&&!v.paused&&want)actx.resume().catch(()=>{})};an=actx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.8;
   const mi=actx.createGain(),G=()=>actx.createGain();
   const dry=G(),side=G(),low=G(),voc=G(),sp=actx.createChannelSplitter(2),gl=G(),gr=G(),sum=G(),hp=f("highpass",130,.7),lp=f("lowpass",150,.7);
   gl.gain.value=.5;gr.gain.value=-.5;sum.channelCount=1;sum.channelCountMode="explicit";sum.channelInterpretation="speakers";
@@ -2084,7 +2084,7 @@ function audioInit(){
   mono.connect(vh);vh.connect(vl);vl.connect(vp);vp.connect(voc);voc.connect(mi);
   const hr=G();mi.connect(hr);hr.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(cmp);cmp.connect(gain);gain.connect(pre);pre.connect(shp);shp.connect(lim);lim.connect(an);const vlm=G();const fxo=G();an.connect(fxo);const fxF=fxBuild(actx,fxo,vlm);vlm.connect(actx.destination);
   sndN={fx:fxF,ctx:actx,vlm,hr,gain,lim,shp,cv,cl,s,lo,mid,hi,cmp,gain,lim,dry,side,low,voc,sp,lp,mono,md:"orig"};sndApply();
-  try{const u=URL.createObjectURL(new Blob(["class L extends AudioWorkletProcessor{constructor(){super();this.h=[new Float32Array(1024),new Float32Array(1024)];this.p=new Float32Array(8);this.g=1}process(i,o){const a=i[0],b=o[0];if(!a||!a.length)return true;const n=a.length,H=8;let pk=0;for(let c=0;c<n;c++){const x=a[c];for(let k=0;k<128;k++){const v=x[k]<0?-x[k]:x[k];if(v>pk)pk=v}}this.p.copyWithin(0,1);this.p[H-1]=pk;const pv=this.g;let t=1e9;for(let d=0;d<H;d++){const q=this.p[d],nd=q>.891?.891/q:1,r=d?pv+(nd-pv)/d:nd;if(r<t)t=r}if(t>1)t=1;const ng=t<pv?t:pv+(t-pv)*(1-Math.exp(-128/(.4*sampleRate)));for(let c=0;c<b.length;c++){const h=this.h[c<2?c:1],x=a[c<n?c:0];h.copyWithin(0,128);h.set(x,896);const y=b[c];for(let k=0;k<128;k++){const g=pv+(ng-pv)*(k+1)/128,z=h[k]*g;y[k]=z>.891?.891:z<-.891?-.891:z}}this.g=ng;return true}}registerProcessor('wv-lim',L);"],{type:'application/javascript'}));actx.audioWorklet.addModule(u).then(()=>{const w=new AudioWorkletNode(actx,'wv-lim',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2],channelCount:2,channelCountMode:'explicit'});gain.disconnect();gain.connect(w);w.connect(lim);sndN.wl=1;sndApply()}).catch(()=>{})}catch(e){}
+  /* limiter: native compressor chain only (custom worklet limiter removed: block-rate gain + hard clip caused crackle/dropouts) */
   try{const u2=URL.createObjectURL(new Blob([$("wsep").textContent],{type:'application/javascript'}));actx.audioWorklet.addModule(u2).then(()=>{const sep=new AudioWorkletNode(actx,'wv-sep',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2],channelCount:2,channelCountMode:'explicit'}),sg=actx.createGain();sep.connect(sg);sg.connect(mi);sep.port.onmessage=e=>{const m=!!(e.data&&e.data.mono);if(m&&!sndN.mn&&sndCfg().mode!="orig")toast("This audio is mono, so voice and music cannot be split. Try a stereo file.");sndN.mn=m};sndN.sep=sep;sndN.sg=sg;sndN.sw=1;sndN.md=null;sndApply()}).catch(()=>{})}catch(e){}
   fd=new Uint8Array(an.frequencyBinCount);td=new Uint8Array(an.fftSize);
  }
