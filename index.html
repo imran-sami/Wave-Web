@@ -81,7 +81,6 @@ html.sov-open #mini{visibility:hidden}
 .vgrid .opt small{display:block;margin:0!important;width:100%;text-align:left}
 .vgrid .opt .rd{position:absolute;top:12px;right:12px;margin:0}
 .vgrid{align-items:stretch}
-:is(.tile,.pc,.srow,.opt,.ab,.chip,.pb,.pp,.drw .it,.stt>div,.trr,.cpk,.rw,.spc,dialog .row),.mp{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;-webkit-mask-image:-webkit-radial-gradient(#fff,#000)}
 :is(.opt,.ab,.tile,.srow,.pc,.chip)>*{position:relative;z-index:1}
 </style>
 <style>
@@ -856,6 +855,21 @@ button,b,small,span,h1,h2,h3,h4,p,label,.tx,.sx{overflow-wrap:break-word;word-br
 .vgrid>.opt.opt[data-a],.vgrid>.opt.opt[data-rs]{padding:14px 16px}
 .vgrid .opt .rd{top:14px;right:12px}
 .vgrid>.opt[data-a] .rd{top:auto;right:auto}
+
+/* fix: option box borders clipped by animated layers; draw border on top via outline */
+.opt,.mp,.ab,.tile,.srow,.pc,.chip{border-color:transparent!important;outline:1px solid var(--line);outline-offset:-1px}
+.opt.on,.mp.on,.ab.on,.tile.on,.srow.on,.pc.on,.chip.on{outline-color:var(--ac)}
+/* fix: selected option border always on top, never clipped; long labels wrap instead of ellipsis */
+.opt{overflow:hidden;outline-width:1px;outline-offset:-1px;z-index:0}
+.opt.on{outline-width:2px;outline-offset:-2px;outline-color:var(--ac)!important}
+.opt .nm{flex:1 1 auto;min-width:0;overflow:visible!important;text-overflow:clip!important;white-space:normal!important;overflow-wrap:anywhere;font-size:14px;line-height:1.2}
+.opt .sw{flex:none}
+/* fix: neon ring drawn right at the edge (no pale gap), selected outline stays on top */
+:root[data-mo="neon"] :is(.opt,.mp,.ab,.tile,.srow,.pc,.chip){outline-color:transparent}
+:root[data-mo="neon"] :is(.opt,.mp,.ab,.tile,.srow,.pc,.chip).on{outline-color:var(--ac)}
+:root[data-mo="neon"] :is(.opt,.mp,.ab,.tile,.srow,.pc,.chip)::after{inset:2px}
+:root[data-mo="neon"] :is(.opt,.mp,.ab,.tile,.srow,.pc,.chip)::before{inset:-100%}
+.mp .t,.mp>span,.mp b{position:relative;z-index:3}
 </style>
 </head>
 <body>
@@ -1412,7 +1426,9 @@ async function addFiles(files,quiet){
 $("fi").onchange=e=>{addFiles(e.target.files);e.target.value=""};
 /* ---------- add menu: files, a whole folder, or re-scan a saved folder ---------- */
 const nat=(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"});
-let savedDir=null;kvGet("dir").then(d=>{if(d&&d.kind=="directory"){savedDir=d;setTimeout(()=>{try{startAutoSync()}catch(e){}},1500)}}).catch(()=>{});
+let savedDirs=[],savedDir=null;
+Promise.all([kvGet("dirs"),kvGet("dir")]).then(([l,o])=>{const a=Array.isArray(l)?l.filter(x=>x&&x.kind=="directory"):[];if(o&&o.kind=="directory"&&!a.some(x=>x===o))a.push(o);savedDirs=a;savedDir=a[0]||null;if(a.length)setTimeout(()=>{try{startAutoSync()}catch(e){}},1500)}).catch(()=>{});
+async function addSavedDir(d){for(const x of savedDirs){try{if(await x.isSameEntry(d))return}catch(e){}}savedDirs.push(d);savedDir=savedDirs[0];kvSet("dirs",savedDirs)}
 async function walk(d,out){for await(const[n,h]of d.entries()){if(h.kind=="file"){if(okFile({name:n,type:""}))out.push(h)}else await walk(h,out)}}
 async function importDir(d,quiet){
  try{
@@ -1424,7 +1440,7 @@ async function importDir(d,quiet){
 }
 async function pickFolder(){
  if(window.showDirectoryPicker){
-  try{const d=await showDirectoryPicker({mode:"read"});savedDir=d;kvSet("dir",d);await importDir(d)}catch(e){if(e&&e.name!="AbortError")toast("Could not open that folder")}
+  try{const d=await showDirectoryPicker({mode:"read"});await addSavedDir(d);await importDir(d)}catch(e){if(e&&e.name!="AbortError")toast("Could not open that folder")}
  }else if(matchMedia("(pointer:coarse)").matches){
   toast("This browser cannot open folders. Choose files, then long-press and Select all.");setTimeout(()=>$("fi").click(),900)
  }else $("fd").click();
@@ -1432,23 +1448,26 @@ async function pickFolder(){
 /* ---------- automatic sync of the saved folder ---------- */
 let lastSync=0,syncing=false;
 async function autoSync(askNow){
- if(!savedDir||syncing||Date.now()-lastSync<30000&&!askNow)return;
+ if(!savedDirs.length||syncing||Date.now()-lastSync<30000&&!askNow)return;
  try{
-  const st=savedDir.queryPermission?await savedDir.queryPermission({mode:"read"}):"granted";
-  if(st!="granted"){
-   if(!askNow)return armSync();
-   if((await savedDir.requestPermission({mode:"read"}))!="granted")return;
-  }
-  syncing=true;lastSync=Date.now();await importDir(savedDir,true);
+  syncing=true;lastSync=Date.now();
+  for(const d of savedDirs){try{
+   const st=d.queryPermission?await d.queryPermission({mode:"read"}):"granted";
+   if(st!="granted"){
+    if(!askNow){armSync();continue}
+    if((await d.requestPermission({mode:"read"}))!="granted")continue;
+   }
+   await importDir(d,true);
+  }catch(e){}}
  }catch(e){}finally{syncing=false}
 }
 let syncArmed=false;
 function armSync(){if(syncArmed)return;syncArmed=true;toast("Tap anywhere once to sync your music folder");addEventListener("pointerup",()=>{syncArmed=false;autoSync(true)},{once:true,capture:true})}
-function startAutoSync(){if(!savedDir)return;autoSync();document.addEventListener("visibilitychange",()=>{if(!document.hidden)autoSync()})}
+function startAutoSync(){if(!savedDirs.length)return;autoSync();document.addEventListener("visibilitychange",()=>{if(!document.hidden)autoSync()})}
 function addMenu(){
  sheet('<h4>Add music &amp; videos</h4><div class="row" data-do="aud">Audio (shows your audio files)</div><div class="row" data-do="vid">Videos (gallery view)</div><div class="row" data-do="files">Other files (also .srt subtitles with the same name as a video)</div><div class="row" data-do="dir">Add a whole folder (then it syncs automatically)</div>'+(savedDir?'<div class="row" data-do="sync">Scan saved folder for new files</div>':''),e=>{
   const r=e.target.closest(".row");if(!r||r.dataset.cx)return;const d=r.dataset.do;closeTo("dlg");
-  if(d=="aud")$("fa").click();else if(d=="vid")$("fv").click();else if(d=="files")$("fi").click();else if(d=="dir")pickFolder();else if(d=="sync")importDir(savedDir);
+  if(d=="aud")$("fa").click();else if(d=="vid")$("fv").click();else if(d=="files")$("fi").click();else if(d=="dir")pickFolder();else if(d=="sync"){(async()=>{for(const x of savedDirs)await importDir(x)})()}
  });
 }
 $("fd").onchange=$("fa").onchange=$("fv").onchange=e=>{addFiles(e.target.files);e.target.value=""};
