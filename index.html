@@ -63,7 +63,7 @@ o[0][i]=this.fo[0][this.fr];if(o[1])o[1][i]=this.fo[1][this.fr];this.fr=(this.fr
 registerProcessor('wv-sep',S);
 </script>
 <script>try{const V="36";if(localStorage.getItem("wave_ver")!==V){{const o=JSON.parse(localStorage.getItem("wave_set")||"{}");delete o.snd;delete o.spd;localStorage.setItem("wave_set",JSON.stringify(o))}localStorage.removeItem("wave_last");localStorage.setItem("wave_ver",V)}}catch(e){}</script>
-<script>try{const s=JSON.parse(localStorage.getItem("wave_set")||"{}"),r=document.documentElement,t=s.theme||"system";r.dataset.mo=s.mo||"waves";r.dataset.fx=s.fx===0?"off":"on";r.dataset.theme=t=="system"?(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"):t;if(s.acc){r.style.setProperty("--ac",s.acc);const n=parseInt(s.acc.slice(1,7),16),f=c=>{c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4)};r.style.setProperty("--on",.2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)>.4?"#111":"#fff")}}catch(e){document.documentElement.dataset.theme="light"}</script>
+<script>try{const s=JSON.parse(localStorage.getItem("wave_set")||"{}"),r=document.documentElement,t=s.theme||"system";r.dataset.mo=s.mo||"waves";r.dataset.fx=s.fx===1?"on":"off";r.dataset.theme=t=="system"?(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"):t;if(s.acc){r.style.setProperty("--ac",s.acc);const n=parseInt(s.acc.slice(1,7),16),f=c=>{c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4)};r.style.setProperty("--on",.2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)>.4?"#111":"#fff")}}catch(e){document.documentElement.dataset.theme="light"}</script>
 <style>
 #sov{position:fixed;inset:0;z-index:70;background:var(--bg);color:var(--tx);display:none;flex-direction:column}
 #sov.open{display:flex}
@@ -965,10 +965,10 @@ const lum=h=>{const n=parseInt(h.slice(1,7),16),f=c=>{c/=255;return c<=.03928?c/
  },{passive:true});
 })();
 const MO=[["waves","Waves"],["bubbles","Bubbles"],["aurora","Aurora"],["shimmer","Shimmer"],["pulse","Glow pulse"],["ripples","Ripples"],["sparkles","Sparkles"],["snow","Snowfall"],["flow","Flow"],["neon","Neon ring"],["eq","Equalizer"],["scan","Scanner"]];
-const moName=()=>set.fx===0?"None":(MO.find(m=>m[0]==(set.mo||"waves"))||MO[0])[1];
+const moName=()=>set.fx!==1?"None":(MO.find(m=>m[0]==(set.mo||"waves"))||MO[0])[1];
 let pgBack=null;
 function motionPage(){
-  const y=$("pgp").scrollTop,cur=set.fx===0?"none":(set.mo||"waves");
+  const y=$("pgp").scrollTop,cur=set.fx!==1?"none":(set.mo||"waves");
   openPage("Motion style",'<div class="aip" style="padding-top:2px"><span>Pick how buttons and cards move across the whole app. Each box below is a live preview.</span></div><div class="mgrid">'
    +MO.concat([["none","None"]]).map(m=>'<button class="mp'+(cur==m[0]?" on":"")+'" data-m="'+m[0]+'">'+(cur==m[0]?'<span class="rd">'+ic("check",14)+'</span>':"")+m[1]+'</button>').join("")+'</div>',null);
   pgBack=themePage;$("pgp").scrollTop=y;
@@ -976,7 +976,7 @@ function motionPage(){
 }
 function applyTheme(){
  const r=document.documentElement,dk=matchMedia("(prefers-color-scheme:dark)").matches;
- r.dataset.theme=set.theme=="system"?(dk?"dark":"light"):set.theme;r.style.setProperty("--ac",set.acc);r.style.setProperty("--on",onc(set.acc));r.dataset.fx=set.fx===0?"off":"on";r.dataset.mo=set.mo||"waves";
+ r.dataset.theme=set.theme=="system"?(dk?"dark":"light"):set.theme;r.style.setProperty("--ac",set.acc);r.style.setProperty("--on",onc(set.acc));r.dataset.fx=set.fx!==1?"off":"on";r.dataset.mo=set.mo||"waves";
  const m=document.querySelector("meta[name=theme-color]");if(m)m.content=getComputedStyle(r).getPropertyValue("--bg").trim();
   if(typeof syncIcons=="function")syncIcons();
 }
@@ -1093,6 +1093,9 @@ function base(){
  if(tab=="recent")return[...tracks].sort((a,b)=>b.added-a.added).slice(0,50);
  return tab=="songs"?tracks.filter(t=>t.type=="audio"):tab=="videos"?tracks.filter(t=>t.type=="video"):tracks.filter(t=>t.fav);
 }
+const PG=40;let MORE=null,mraf=0;
+function moreChk(){const m=$("more");if(!m||!MORE)return;let g=0;while(MORE&&m.getBoundingClientRect().top<innerHeight*2.5&&MORE.n<MORE.L.length&&g++<6){const r=document.querySelector("#lst .rows");if(!r)return;const e=Math.min(MORE.L.length,MORE.n+PG);r.insertAdjacentHTML("beforeend",MORE.L.slice(MORE.n,e).map(t=>row(t,MORE.dr)).join(""));MORE.n=e;if(e>=MORE.L.length){m.remove();break}}}
+addEventListener("scroll",()=>{if(!mraf)mraf=requestAnimationFrame(()=>{mraf=0;moreChk()})},{passive:true});
 function lstHtml(){
  let L=base();const all=L.length;
  if(q){const nz=x=>String(x||"").normalize("NFC").toLowerCase(),ws=nz(q).split(/\s+/).filter(Boolean);L=L.filter(t=>{const h=nz(t.name);return ws.every(w=>h.includes(w))})}
@@ -1103,8 +1106,9 @@ function lstHtml(){
  if(!all)return '<div class="empty"><h3>Nothing here yet</h3><p>Use the ⋯ menu on a track to add it to Favorites or a playlist.</p></div>';
  if(!L.length)return '<div class="empty"><h3>No results</h3></div>';
  const dr=set.sort=="manual"&&!q&&!selMode&&tab!="recent";
+ MORE={L,dr,n:PG};setTimeout(moreChk,0);
  const canNew=!view&&(tab=="songs"||tab=="videos");
- return '<div class="lh"><button class="pb" data-a="pall">'+ic("play",14,1)+' Play</button><button class="ib" data-a="shufb" aria-label="Shuffle">'+ic("shuf",22)+'</button><span class="fl"></span>'+(canNew?'<button class="ib" data-a="newpl" aria-label="New playlist">'+ic("pladd",22)+'</button>':'')+'<button class="ib" data-a="vm" aria-label="Change view">'+ic("v"+set.vm,22)+'</button><button class="ib'+(set.sort!="manual"?" on":"")+'" data-a="sort" aria-label="Sort">'+ic("sort",22)+'</button><button class="ib'+(selMode?" on":"")+'" data-a="sel" aria-label="Select">'+ic("check",22)+'</button></div><div class="rows v-'+set.vm+'">'+L.map(t=>row(t,dr)).join("")+'</div>';
+ return '<div class="lh"><button class="pb" data-a="pall">'+ic("play",14,1)+' Play</button><button class="ib" data-a="shufb" aria-label="Shuffle">'+ic("shuf",22)+'</button><span class="fl"></span>'+(canNew?'<button class="ib" data-a="newpl" aria-label="New playlist">'+ic("pladd",22)+'</button>':'')+'<button class="ib" data-a="vm" aria-label="Change view">'+ic("v"+set.vm,22)+'</button><button class="ib'+(set.sort!="manual"?" on":"")+'" data-a="sort" aria-label="Sort">'+ic("sort",22)+'</button><button class="ib'+(selMode?" on":"")+'" data-a="sel" aria-label="Select">'+ic("check",22)+'</button></div><div class="rows v-'+set.vm+'">'+L.slice(0,PG).map(t=>row(t,dr)).join("")+'</div>'+(L.length>PG?'<div id="more" style="height:2px"></div>':'');
 }
 function render(){
  const p=curPl();
@@ -2090,7 +2094,7 @@ function audioInit(){
  }
  catch(e){vzFail=1;an=null;sndN=null}
 }
-function vzOn(){const m=vzCur();return CV.includes(m)&&$("full").classList.contains("open")&&cur&&cur.type!="video"}
+function vzOn(){const m=vzCur();return !!set.viz&&CV.includes(m)&&$("full").classList.contains("open")&&cur&&cur.type!="video"}
 function vzLoop(){
  cancelAnimationFrame(raf);
  if(!vzOn())return;
